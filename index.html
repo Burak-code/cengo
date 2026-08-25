@@ -2,19 +2,19 @@
 <html lang="tr" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <title>Cengo Chat - Gelişmiş Oda & Profil</title>
+    <title>Cengo Chat - Özel Balon Renkleri</title>
     <style>
         :root {
-            --bg-color: #efeae2;
-            --sidebar-bg: #f0f2f5;
-            --chat-bg: #fff;
-            --header-bg: #075e54;
-            --header-text: #fff;
-            --msg-rcv: #fff;
-            --text-color: #000;
-            --input-bg: #f0f0f0;
-            --border-color: #d1d7db;
+            --bg-color: #e5ddd5;
+            --sidebar-bg: #ffffff;
+            --chat-bg: #efeae2;
+            --header-bg: #008069;
+            --header-text: #ffffff;
+            --text-color: #111b21;
+            --input-bg: #f0f2f5;
+            --border-color: #e9edef;
             --brand-bg: #111b21;
+            --accent-color: #00a884;
         }
 
         [data-theme="dark"] {
@@ -23,67 +23,278 @@
             --chat-bg: #0b141a;
             --header-bg: #202c33;
             --header-text: #e9edef;
-            --msg-rcv: #202c33;
             --text-color: #e9edef;
             --input-bg: #202c33;
             --border-color: #222d34;
             --brand-bg: #060a0e;
+            --accent-color: #00a884;
         }
 
-        body { font-family: sans-serif; background: var(--bg-color); margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; color: var(--text-color); transition: 0.3s; }
-        .app-container { width: 980px; height: 720px; background: var(--chat-bg); display: flex; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); overflow: hidden; border: 1px solid var(--border-color); position: relative; }
-        
-        /* EN SOLDAKİ AFİLLİ BRANDING ŞERİDİ */
-        .brand-sidebar { width: 60px; background: var(--brand-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 15px 0; z-index: 10; }
-        .brand-top, .brand-bottom { display: flex; flex-direction: column; align-items: center; gap: 15px; }
-        .brand-icon { width: 38px; height: 38px; border-radius: 50%; background: var(--header-bg); display: flex; align-items: center; justify-content: center; color: #fff; text-decoration: none; font-size: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: 0.2s; position: relative; }
-        .brand-icon:hover { transform: scale(1.1); opacity: 0.9; }
-        
-        .brand-icon::after { content: attr(data-tooltip); position: absolute; left: 55px; background: #202c33; color: #e9edef; padding: 5px 10px; font-size: 11px; border-radius: 4px; white-space: nowrap; opacity: 0; pointer-events: none; transition: 0.2s; border: 1px solid var(--border-color); z-index: 100; }
+        * { box-sizing: border-box; }
+
+        /* Özel Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(130, 130, 130, 0.3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(130, 130, 130, 0.5); }
+
+        body { 
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; 
+            background: var(--bg-color); 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            color: var(--text-color); 
+            transition: background 0.3s ease; 
+        }
+
+        .app-container { 
+            width: 1020px; 
+            height: 740px; 
+            background: var(--chat-bg); 
+            display: flex; 
+            border-radius: 12px; 
+            box-shadow: 0 12px 28px rgba(0,0,0,0.25); 
+            overflow: hidden; 
+            border: 1px solid var(--border-color); 
+            position: relative; 
+        }
+
+        /* BRANDING ŞERİDİ */
+        .brand-sidebar { 
+            width: 64px; 
+            background: var(--brand-bg); 
+            border-right: 1px solid var(--border-color); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 18px 0; 
+            z-index: 10; 
+        }
+        .brand-top, .brand-bottom { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+        .brand-icon { 
+            width: 42px; 
+            height: 42px; 
+            border-radius: 12px; 
+            background: var(--header-bg); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: #fff; 
+            text-decoration: none; 
+            font-size: 18px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15); 
+            transition: all 0.2s ease; 
+            position: relative; 
+        }
+        .brand-icon:hover { transform: translateY(-2px); opacity: 0.95; }
+        .brand-icon::after { 
+            content: attr(data-tooltip); 
+            position: absolute; 
+            left: 60px; 
+            background: #202c33; 
+            color: #e9edef; 
+            padding: 6px 12px; 
+            font-size: 12px; 
+            border-radius: 6px; 
+            white-space: nowrap; 
+            opacity: 0; 
+            pointer-events: none; 
+            transition: 0.2s ease; 
+            border: 1px solid var(--border-color); 
+            z-index: 100; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
+        }
         .brand-icon:hover::after { opacity: 1; }
 
-        /* Sol Panel (Odalar) */
-        .sidebar { width: 260px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; transition: 0.3s; }
+        /* SOL PANEL (ODALAR) */
+        .sidebar { 
+            width: 280px; 
+            background: var(--sidebar-bg); 
+            border-right: 1px solid var(--border-color); 
+            display: flex; 
+            flex-direction: column; 
+            transition: width 0.3s ease; 
+        }
         .sidebar.collapsed { width: 0; overflow: hidden; border: none; }
-        .sidebar-header { padding: 15px; background: var(--header-bg); color: var(--header-text); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* Profil Alanı */
-        .profile-box { padding: 10px 15px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px; background: var(--chat-bg); }
-        .profile-pic { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; background: #ccc; cursor: pointer; border: 1px solid var(--border-color); }
+        .sidebar-header { 
+            padding: 16px; 
+            background: var(--header-bg); 
+            color: var(--header-text); 
+            font-weight: 600; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
 
-        .room-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-        .room-item { padding: 8px 10px; background: var(--chat-bg); border-radius: 6px; cursor: pointer; border: 1px solid var(--border-color); font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
-        .room-item:hover { opacity: 0.8; }
-        .room-item.active { background: #005c4b; font-weight: bold; color: #fff; }
-        .room-actions { display: flex; gap: 5px; }
-        .room-actions button { background: none; border: none; cursor: pointer; font-size: 14px; opacity: 0.7; }
+        /* Profil Alanı & Renk Seçici */
+        .profile-box { 
+            padding: 12px 16px; 
+            border-bottom: 1px solid var(--border-color); 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            background: var(--sidebar-bg); 
+        }
+        .profile-pic-container {
+            position: relative;
+            display: inline-block;
+        }
+        .profile-pic { 
+            width: 42px; 
+            height: 42px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            background: #ccc; 
+            cursor: pointer; 
+            border: 2px solid var(--accent-color); 
+            transition: transform 0.2s ease; 
+            display: block;
+        }
+        .profile-pic:hover { transform: scale(1.05); }
+        .online-badge {
+            width: 12px;
+            height: 12px;
+            background-color: #25d366;
+            border: 2px solid var(--sidebar-bg);
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: gray;
+        }
+
+        .color-picker-wrapper input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 0;
+            background: none;
+        }
+
+        .color-picker-wrapper input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        .color-picker-wrapper input[type="color"]::-webkit-color-swatch {
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+        }
+
+        .room-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+        .room-item { 
+            padding: 10px 12px; 
+            background: transparent; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            border: 1px solid transparent; 
+            font-size: 14px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            transition: all 0.2s ease; 
+        }
+        .room-item:hover { background: var(--input-bg); }
+        .room-item.active { background: var(--accent-color); color: #fff; font-weight: 600; }
+        .room-actions { display: flex; gap: 6px; }
+        .room-actions button { background: none; border: none; cursor: pointer; font-size: 14px; opacity: 0.7; transition: opacity 0.2s; }
         .room-actions button:hover { opacity: 1; }
-        
-        .sidebar-footer { padding: 10px; background: var(--sidebar-bg); border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 5px; }
-        .sidebar-footer input { padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--chat-bg); color: var(--text-color); outline: none; font-size: 13px; }
 
-        /* Sağ Panel (Sohbet) */
+        .sidebar-footer { padding: 12px; background: var(--sidebar-bg); border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
+        .sidebar-footer input { 
+            padding: 9px 12px; 
+            border: 1px solid var(--border-color); 
+            border-radius: 6px; 
+            background: var(--input-bg); 
+            color: var(--text-color); 
+            outline: none; 
+            font-size: 13px; 
+        }
+
+        /* SAĞ PANEL (SOHBET) */
         .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--chat-bg); }
-        .chat-header { background: var(--header-bg); color: var(--header-text); padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        .header-left { display: flex; align-items: center; gap: 10px; }
-        
-        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: var(--bg-color); }
-        .msg { display: flex; gap: 10px; max-width: 80%; align-self: flex-start; }
+        .chat-header { background: var(--header-bg); color: var(--header-text); padding: 14px 20px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: var(--chat-bg); }
+
+        /* Mesaj Balonları */
+        .msg { display: flex; gap: 10px; max-width: 75%; align-self: flex-start; }
         .msg.my-msg { align-self: flex-end; flex-direction: row-reverse; }
-        
-        .msg-pp { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; margin-top: 2px; }
-        
-        /* Baloncuk ve altındaki mini isim */
-        .msg-content { padding: 8px 12px 4px 12px; border-radius: 8px; word-break: break-all; box-shadow: 0 1px 0.5px rgba(0,0,0,0.1); color: #000; position: relative; }
-        .msg-author-tag { font-size: 9px; opacity: 0.7; display: block; text-align: right; margin-top: 2px; font-weight: bold; }
 
-        .msg-content img { max-width: 100%; border-radius: 6px; margin-top: 5px; display: block; }
-        .msg-content audio { width: 100%; margin-top: 5px; }
-        .file-link { display: block; color: inherit; text-decoration: underline; margin-top: 5px; font-weight: bold; }
+        .msg-pp { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; margin-top: 2px; }
 
-        .chat-input { padding: 10px; display: flex; gap: 5px; background: var(--input-bg); align-items: center; border-top: 1px solid var(--border-color); }
-        input[type="text"] { flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; background: var(--chat-bg); color: var(--text-color); }
-        .btn { background: var(--header-bg); color: var(--header-text); border: none; padding: 10px 14px; border-radius: 4px; cursor: pointer; }
+        .msg-content { 
+            padding: 8px 14px 6px 14px; 
+            border-radius: 12px; 
+            word-break: break-word; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2); 
+            position: relative; 
+            font-size: 14px; 
+            line-height: 1.4; 
+        }
+        .msg.my-msg .msg-content { border-top-right-radius: 2px; }
+        .msg:not(.my-msg) .msg-content { border-top-left-radius: 2px; }
+
+        .msg-footer-info {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            margin-top: 4px;
+            opacity: 0.75;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .msg-content img { max-width: 100%; border-radius: 8px; margin-top: 6px; display: block; }
+        .msg-content audio { width: 100%; margin-top: 6px; }
+        .file-link { display: inline-block; color: inherit; text-decoration: none; margin-top: 4px; font-weight: 600; background: rgba(0,0,0,0.1); padding: 6px 10px; border-radius: 6px; }
+
+        /* Input Alanı */
+        .chat-input { padding: 12px 16px; display: flex; gap: 8px; background: var(--input-bg); align-items: center; border-top: 1px solid var(--border-color); }
+        input[type="text"] { 
+            flex: 1; 
+            padding: 10px 14px; 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            outline: none; 
+            background: var(--sidebar-bg); 
+            color: var(--text-color); 
+            font-size: 14px; 
+        }
+        .btn { 
+            background: var(--header-bg); 
+            color: var(--header-text); 
+            border: none; 
+            padding: 10px 16px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: background 0.2s ease, transform 0.1s ease; 
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn:active { transform: scale(0.98); }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
 </head>
@@ -91,7 +302,7 @@
 
 <div class="app-container">
     
-    <!-- EN SOLDAKİ BRANDING (İMZA) ŞERİDİ -->
+    <!-- BRANDING ŞERİDİ -->
     <div class="brand-sidebar">
         <div class="brand-top">
             <a href="https://instagram.com/burak_msz" target="_blank" class="brand-icon" data-tooltip="created by @burak_msz (Instagram)">🅾 </a>
@@ -111,11 +322,21 @@
         
         <!-- Profil Alanı -->
         <div class="profile-box">
-            <input type="file" id="ppInput" style="display:none" onchange="changeProfilePic(this)">
-            <img src="" id="myProfilePic" class="profile-pic" onclick="document.getElementById('ppInput').click()" title="PP Değiştirmek için tıkla">
-            <div style="cursor: pointer;" onclick="changeUsername()" title="İsmi değiştirmek için tıkla">
-                <div id="sidebarUsername" style="font-weight: bold; font-size: 14px;">Kullanıcı</div>
-                <div style="font-size: 11px; color: gray;">Değiştir ✏️</div>
+            <input type="file" id="ppInput" accept="image/*" style="display:none" onchange="changeProfilePic(this)">
+            <div class="profile-pic-container" onclick="document.getElementById('ppInput').click()" title="PP Değiştirmek için tıkla">
+                <img src="" id="myProfilePic" class="profile-pic">
+                <div class="online-badge"></div>
+            </div>
+            
+            <div class="user-details">
+                <div style="cursor: pointer; font-weight: bold; font-size: 14px;" onclick="changeUsername()" title="İsmi değiştirmek için tıkla">
+                    <span id="sidebarUsername">Kullanıcı</span> ✏️
+                </div>
+                <!-- RGB Renk Seçici -->
+                <div class="color-picker-wrapper">
+                    <span>Balon Rengi:</span>
+                    <input type="color" id="userColorPicker" onchange="updateUserColor(this.value)">
+                </div>
             </div>
         </div>
 
@@ -155,6 +376,10 @@
     let username = localStorage.getItem("cengo_username") || prompt("Adını gir:") || ("Misafir_" + Math.floor(Math.random()*100));
     localStorage.setItem("cengo_username", username);
 
+    // Kullanıcının seçtiği renk (Varsayılan yeşil tonu)
+    let userBubbleColor = localStorage.getItem("cengo_color") || "#005c4b";
+    document.getElementById("userColorPicker").value = userBubbleColor;
+
     let myProfileData = "https://www.w3schools.com/howto/img_avatar.png";
     
     document.getElementById("sidebarUsername").innerText = username;
@@ -165,31 +390,38 @@
     let currentTopic = null;
     let currentRoomName = null;
 
-    // Odalar nesnesi: Artık her odanın şifresini ve kurucusunu (owner) tutuyor
     let rooms = JSON.parse(localStorage.getItem("cengo_rooms")) || {
         "Genel Sohbet": { pass: "", owner: "Sistem" }
     };
     
-    // Eski versiyonlardan kalma düz metin şifre yapısını yeni nesne yapısına migrate et (hata almamak için)
     for (let r in rooms) {
         if (typeof rooms[r] === "string") {
             rooms[r] = { pass: rooms[r], owner: "Sistem" };
         }
     }
-    rooms["Genel Sohbet"] = { pass: "", owner: "Sistem" }; // Genel sohbet garanti olsun
+    rooms["Genel Sohbet"] = { pass: "", owner: "Sistem" };
 
     function saveRooms() {
         localStorage.setItem("cengo_rooms", JSON.stringify(rooms));
     }
 
-    const bubbleColors = ["#dcf8c6", "#a8d8ea", "#ffb4a2", "#e3e3e3", "#ffd166", "#c7ceea", "#ff9aa2"];
-    function getUserColor(name) {
-        let hash = 0;
-        for (let i = 0; i < name.length; i++) {
-            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    function updateUserColor(colorHex) {
+        userBubbleColor = colorHex;
+        localStorage.setItem("cengo_color", colorHex);
+    }
+
+    // Seçilen renge göre (Açık/Koyu) metin rengini siyah veya beyaz yapma
+    function getContrastTextColor(hexColor) {
+        if (!hexColor || hexColor.charAt(0) !== '#') return '#ffffff';
+        let hex = hexColor.replace('#', '');
+        if (hex.length === 3) {
+            hex = hex.split('').map(c => c + c).join('');
         }
-        let index = Math.abs(hash) % bubbleColors.length;
-        return bubbleColors[index];
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+        return (yiq >= 128) ? '#111b21' : '#ffffff';
     }
 
     function initMQTT() {
@@ -201,20 +433,24 @@
         });
 
         client.on('message', (top, message) => {
-            if (top === 'cengo/room-list-sync') {
+            try {
                 const data = JSON.parse(message.toString());
-                if (data.type === 'room_sync') {
-                    rooms = data.rooms;
-                    if (!rooms["Genel Sohbet"]) {
-                        rooms["Genel Sohbet"] = { pass: "", owner: "Sistem" };
+                if (top === 'cengo/room-list-sync') {
+                    if (data.type === 'room_sync') {
+                        rooms = data.rooms;
+                        if (!rooms["Genel Sohbet"]) {
+                            rooms["Genel Sohbet"] = { pass: "", owner: "Sistem" };
+                        }
+                        saveRooms();
+                        renderRooms();
+                    } else if (data.type === 'get_rooms') {
+                        client.publish('cengo/room-list-sync', JSON.stringify({ type: 'room_sync', rooms: rooms }));
                     }
-                    saveRooms();
-                    renderRooms();
-                } else if (data.type === 'get_rooms') {
-                    client.publish('cengo/room-list-sync', JSON.stringify({ type: 'room_sync', rooms: rooms }));
+                } else if (top === currentTopic) {
+                    displayMessage(data);
                 }
-            } else if (top === currentTopic) {
-                displayMessage(JSON.parse(message.toString()));
+            } catch (e) {
+                console.error("Mesaj hatası:", e);
             }
         });
     }
@@ -242,7 +478,6 @@
             let lockIcon = roomData.pass ? " 🔒" : "";
             
             let actionButtons = '';
-            // Sadece Oda Kurucusu (veya Genel Sohbet haricindekilerde kurucu olan) ayarlarla/silmeyle oynayabilir
             if (roomName !== "Genel Sohbet" && roomData.owner === username) {
                 actionButtons = `
                     <div class="room-actions">
@@ -374,6 +609,10 @@
     function changeProfilePic(input) {
         const file = input.files[0];
         if (!file) return;
+        if (file.size > 1024 * 1024) {
+            alert("Profil fotoğrafı boyutu maksimum 1 MB olabilir!");
+            return;
+        }
         const reader = new FileReader();
         reader.onload = function(e) {
             myProfileData = e.target.result;
@@ -386,11 +625,16 @@
         const text = document.getElementById("msgText").value;
         if (!text || !currentTopic) return;
         
+        const now = new Date();
+        const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+
         const payload = JSON.stringify({ 
             type: 'text', 
             gonderen: username, 
             pp: myProfileData,
-            content: text 
+            color: userBubbleColor,
+            content: text,
+            time: timeStr
         });
         client.publish(currentTopic, payload);
         document.getElementById("msgText").value = "";
@@ -399,6 +643,15 @@
     function handleFile(input) {
         const file = input.files[0];
         if (!file || !currentTopic) return;
+
+        if (file.size > 1024 * 1024) {
+            alert("Yüklenen dosya boyutu 1 MB'ı geçemez!");
+            input.value = "";
+            return;
+        }
+
+        const now = new Date();
+        const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
 
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -410,8 +663,10 @@
                 type: fileType,
                 gonderen: username,
                 pp: myProfileData,
+                color: userBubbleColor,
                 content: e.target.result,
-                fileName: file.name
+                fileName: file.name,
+                time: timeStr
             });
             client.publish(currentTopic, payload);
         };
@@ -433,22 +688,50 @@
         const contentDiv = document.createElement("div");
         contentDiv.className = "msg-content";
         
-        contentDiv.style.backgroundColor = getUserColor(data.gonderen);
-        
-        let innerHTML = '';
+        // Dinamik Renk Ve Metin Kontrastı
+        const bgColor = data.color || (isMe ? "#005c4b" : "#202c33");
+        contentDiv.style.backgroundColor = bgColor;
+        contentDiv.style.color = getContrastTextColor(bgColor);
+
         if (data.type === 'text') {
-            innerHTML += `<span>${data.content}</span>`;
+            const span = document.createElement("span");
+            span.textContent = data.content;
+            contentDiv.appendChild(span);
         } else if (data.type === 'image') {
-            innerHTML += `<img src="${data.content}">`;
+            const img = document.createElement("img");
+            img.src = data.content;
+            contentDiv.appendChild(img);
         } else if (data.type === 'audio') {
-            innerHTML += `<audio controls src="${data.content}"></audio>`;
+            const audio = document.createElement("audio");
+            audio.controls = true;
+            audio.src = data.content;
+            contentDiv.appendChild(audio);
         } else {
-            innerHTML += `<a class="file-link" href="${data.content}" download="${data.fileName}">📄 ${data.fileName} (İndir)</a>`;
+            const a = document.createElement("a");
+            a.className = "file-link";
+            a.href = data.content;
+            a.download = data.fileName || "dosya";
+            a.textContent = `📄 ${data.fileName || 'Dosya'} (İndir)`;
+            contentDiv.appendChild(a);
         }
         
-        innerHTML += `<span class="msg-author-tag">~ ${data.gonderen}</span>`;
+        const footerDiv = document.createElement("div");
+        footerDiv.className = "msg-footer-info";
         
-        contentDiv.innerHTML = innerHTML;
+        const authorTag = document.createElement("span");
+        authorTag.textContent = `~ ${data.gonderen}`;
+        
+        const timeTag = document.createElement("span");
+        timeTag.textContent = data.time || '';
+
+        footerDiv.appendChild(authorTag);
+        if (data.time) {
+            footerDiv.appendChild(document.createTextNode(" • "));
+            footerDiv.appendChild(timeTag);
+        }
+
+        contentDiv.appendChild(footerDiv);
+        
         msgDiv.appendChild(ppImg);
         msgDiv.appendChild(contentDiv);
         
