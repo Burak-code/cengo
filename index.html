@@ -1275,6 +1275,7 @@
         let isAdmin = false;
         let isOwner = false;
         let isFirstHistoryLoad = true;
+        let initialHistoryLoaded = false; // Geçmişin ilk kez yüklenip yüklenmediğini takip et
 
         // ===== TEMA =====
         function toggleTheme() {
@@ -1653,12 +1654,14 @@
         }
 
         // ===== MQTT =====
+        let initialRoomSyncDone = false;
+
         function initMQTT() {
             client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
             client.on('connect', () => {
                 console.log("✅ MQTT bağlandı");
                 client.subscribe('cengo/room-list-sync');
-                // Odaları senkronize et - sadece talep et
+                // Odaları talep et
                 client.publish('cengo/room-list-sync', JSON.stringify({ type: 'get_rooms' }));
                 joinRoom("Genel Sohbet");
                 client.subscribe('cengo/online');
@@ -1680,23 +1683,40 @@
                     }
 
                     if (top === 'cengo/room-list-sync') {
-                        if (data.type === 'room_sync') {
-                            // Gelen odaları kendi odalarımla birleştir - kendi odalarımı koru
-                            if (data.rooms) {
-                                // Kendi odalarımı koru, sadece eksik olanları ekle
-                                for (let roomName in data.rooms) {
-                                    if (!rooms[roomName]) {
-                                        rooms[roomName] = data.rooms[roomName];
-                                    }
+                        if (data.type === 'room_sync' && data.rooms) {
+                            // FIX: SADECE EKSİK OLAN ODALARI EKLE, MEVCUT OLANLARI SİLME!
+                            // Kendi odalarımı koru, sadece eksik olanları ekle
+                            let changed = false;
+                            for (let roomName in data.rooms) {
+                                if (!rooms[roomName]) {
+                                    rooms[roomName] = data.rooms[roomName];
+                                    changed = true;
                                 }
-                                // Genel Sohbet her zaman var olsun
-                                if (!rooms["Genel Sohbet"]) rooms["Genel Sohbet"] = { pass: "", owner: "Sistem" };
+                            }
+                            // Genel Sohbet her zaman var olsun
+                            if (!rooms["Genel Sohbet"]) {
+                                rooms["Genel Sohbet"] = { pass: "", owner: "Sistem" };
+                                changed = true;
+                            }
+                            if (changed) {
                                 saveRooms();
                                 renderRooms();
                             }
+                            initialRoomSyncDone = true;
                         } else if (data.type === 'get_rooms') {
-                            // Başka bir istemci odaları istedi - kendi odalarımı gönder
-                            client.publish('cengo/room-list-sync', JSON.stringify({ type: 'room_sync', rooms: rooms }));
+                            // Başka bir istemci odaları istedi - kendi odalarımı gönder (SADECE BENİM ODALARIMI GÖNDER)
+                            // SADECE sahibi olduğum odaları gönder
+                            const myRooms = {};
+                            for (let roomName in rooms) {
+                                if (rooms[roomName].owner === username || roomName === "Genel Sohbet") {
+                                    myRooms[roomName] = rooms[roomName];
+                                }
+                            }
+                            // Eğer hiç odam yoksa boş gönderme, sadece Genel Sohbet'i gönder
+                            if (Object.keys(myRooms).length === 0) {
+                                myRooms["Genel Sohbet"] = { pass: "", owner: "Sistem" };
+                            }
+                            client.publish('cengo/room-list-sync', JSON.stringify({ type: 'room_sync', rooms: myRooms }));
                         }
                         return;
                     }
@@ -1799,10 +1819,11 @@
                 const history2 = getMessageHistory(roomName);
                 if (history2.length === 0) {
                     container.innerHTML =
-                    `<div style="text-align:center; color:#475569; margin-top:80px;">💬 Henüz mesaj yok. İlk mesajı sen gönder!</div>`;
+                        `<div style="text-align:center; color:#475569; margin-top:80px;">💬 Henüz mesaj yok. İlk mesajı sen gönder!</div>`;
                 } else {
                     renderMessages(roomName);
                 }
+                initialHistoryLoaded = true;
             }, 5000);
         }
 
@@ -1833,10 +1854,14 @@
 
             const currentHistory = getMessageHistory(currentRoomName);
             const existingIds = new Set(currentHistory.map(m => m.msgId));
+            
+            // FIX: SADECE EKSİK OLAN MESAJLARI EKLE, MEVCUTLARI SİLME!
             const newMessages = data.messages.filter(m => !existingIds.has(m.msgId));
 
             if (newMessages.length > 0) {
+                // Mevcut mesajları koruyarak sadece yeni mesajları ekle
                 const allMessages = [...currentHistory, ...newMessages];
+                // msgId'ye göre sırala (tarih sırası)
                 allMessages.sort((a, b) => (a.msgId || '').localeCompare(b.msgId || ''));
                 saveMessageHistory(currentRoomName, allMessages);
                 renderMessages(currentRoomName);
@@ -1845,6 +1870,7 @@
                 container.innerHTML =
                     `<div style="text-align:center; color:#475569; margin-top:80px;">💬 Henüz mesaj yok. İlk mesajı sen gönder!</div>`;
             }
+            initialHistoryLoaded = true;
         }
 
         // ===== LOCAL STORAGE =====
@@ -1885,7 +1911,13 @@
         function renderRooms() {
             const list = document.getElementById("roomList");
             list.innerHTML = "";
-            for (let roomName in rooms) {
+            // Odaları alfabetik sırala (Genel Sohbet en üstte)
+            const sortedRooms = Object.keys(rooms).sort((a, b) => {
+                if (a === "Genel Sohbet") return -1;
+                if (b === "Genel Sohbet") return 1;
+                return a.localeCompare(b);
+            });
+            for (let roomName of sortedRooms) {
                 const data = rooms[roomName];
                 const div = document.createElement("div");
                 div.className = `room-item ${currentRoomName === roomName ? 'active' : ''}`;
@@ -1940,8 +1972,19 @@
             document.getElementById("currentRoomTitle").innerHTML = "💬 " + roomName + ' <span class="online-count" id="onlineCount">👤 0</span>';
             document.getElementById("chatInputArea").style.display = "flex";
 
-            renderMessages(roomName);
+            // FIX: Odaya girerken mevcut mesajları koru, sadece render et
+            const history = getMessageHistory(roomName);
+            if (history.length > 0) {
+                renderMessages(roomName);
+            } else {
+                const container = document.getElementById("chatMessages");
+                container.innerHTML =
+                    `<div style="text-align:center; color:#475569; margin-top:80px;">💬 Henüz mesaj yok. İlk mesajı sen gönder!</div>`;
+            }
+            
+            // Geçmişi talep et (mevcut mesajların üzerine yazmaz, sadece eksikleri ekler)
             requestHistory(roomName);
+            
             renderRooms();
             document.getElementById('roomPanel').classList.remove('open');
             cancelReply();
@@ -1959,8 +2002,14 @@
             if (rooms[name]) { alert("Zaten var!"); return; }
             rooms[name] = { pass: pass, owner: username };
             saveRooms();
-            // Odaları senkronize et - sadece kendi odalarımı gönder
-            client.publish('cengo/room-list-sync', JSON.stringify({ type: 'room_sync', rooms: rooms }));
+            // SADECE kendi odalarımı gönder
+            const myRooms = {};
+            for (let roomName in rooms) {
+                if (rooms[roomName].owner === username || roomName === "Genel Sohbet") {
+                    myRooms[roomName] = rooms[roomName];
+                }
+            }
+            client.publish('cengo/room-list-sync', JSON.stringify({ type: 'room_sync', rooms: myRooms }));
             document.getElementById("newRoomInput").value = "";
             document.getElementById("newRoomPass").value = "";
             renderRooms();
@@ -1979,7 +2028,14 @@
             delete rooms[roomName];
             rooms[trimmed] = { pass: newPass !== null ? newPass.trim() : data.pass, owner: username };
             saveRooms();
-            client.publish('cengo/room-list-sync', JSON.stringify({ type: 'room_sync', rooms: rooms }));
+            // SADECE kendi odalarımı gönder
+            const myRooms = {};
+            for (let roomName2 in rooms) {
+                if (rooms[roomName2].owner === username || roomName2 === "Genel Sohbet") {
+                    myRooms[roomName2] = rooms[roomName2];
+                }
+            }
+            client.publish('cengo/room-list-sync', JSON.stringify({ type: 'room_sync', rooms: myRooms }));
             renderRooms();
             if (currentRoomName === roomName) joinRoom(trimmed);
         }
@@ -1991,7 +2047,14 @@
             if (confirm(`"${roomName}" odasını sil?`)) {
                 delete rooms[roomName];
                 saveRooms();
-                client.publish('cengo/room-list-sync', JSON.stringify({ type: 'room_sync', rooms: rooms }));
+                // SADECE kendi odalarımı gönder
+                const myRooms = {};
+                for (let roomName2 in rooms) {
+                    if (rooms[roomName2].owner === username || roomName2 === "Genel Sohbet") {
+                        myRooms[roomName2] = rooms[roomName2];
+                    }
+                }
+                client.publish('cengo/room-list-sync', JSON.stringify({ type: 'room_sync', rooms: myRooms }));
                 renderRooms();
                 if (currentRoomName === roomName) joinRoom("Genel Sohbet");
             }
@@ -2419,6 +2482,8 @@
 
         function renderMessages(roomName) {
             const container = document.getElementById("chatMessages");
+            // FIX: Container'ı temizleme, sadece mesajları yeniden render et
+            // Ama container'ı temizleyip yeniden oluşturmak daha temiz
             container.innerHTML = "";
             const history = getMessageHistory(roomName);
             if (history.length === 0) {
@@ -2537,6 +2602,7 @@
         console.log("💾 Odalar ve mesajlar kalıcı! (LocalStorage)");
         console.log("🔔 Admin duyurusu ( /message_ ) özel bip sesi çıkarır!");
         console.log("✅ FIX: Odalar artık kendi kendine silinmiyor!");
+        console.log("✅ FIX: Mesajlar odaya girip çıkınca kaybolmuyor!");
         console.log("✅ FIX: Mesaj silme sadece seçili mesajı siliyor!");
     </script>
 
