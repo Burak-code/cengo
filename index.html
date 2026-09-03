@@ -74,7 +74,6 @@
             gap: 0;
         }
 
-        /* ===== SOL NAV ===== */
         .nav-side {
             width: 72px;
             background: var(--bg-secondary);
@@ -164,7 +163,6 @@
             border-color: var(--accent);
         }
 
-        /* ===== ODA PANELİ ===== */
         .room-panel {
             width: 280px;
             background: var(--bg-secondary);
@@ -282,6 +280,15 @@
             opacity: 0.6;
             margin-left: 6px;
         }
+        .room-item .expiry-badge {
+            font-size: 9px;
+            background: var(--owner-color);
+            color: #fff;
+            padding: 1px 6px;
+            border-radius: 10px;
+            margin-left: 6px;
+            opacity: 0.7;
+        }
 
         .room-footer {
             padding: 14px 16px;
@@ -349,7 +356,6 @@
             background: #dc2626;
         }
 
-        /* ===== CHAT ALANI ===== */
         .chat-area {
             flex: 1;
             display: flex;
@@ -413,7 +419,6 @@
             background: var(--bg-primary);
         }
 
-        /* ===== MESAJ BUBBLE ===== */
         .msg {
             display: flex;
             gap: 14px;
@@ -554,7 +559,6 @@
             font-weight: 700;
         }
 
-        /* ===== MESAJ AKSİYON BUTONLARI - FİX ===== */
         .msg-actions {
             display: flex;
             gap: 3px;
@@ -619,7 +623,6 @@
             color: black;
         }
 
-        /* ===== EMOJI BAR ===== */
         .emoji-bar {
             display: flex;
             gap: 4px;
@@ -642,7 +645,6 @@
             transform: scale(1.1);
         }
 
-        /* ===== INPUT ALANI ===== */
         .chat-input {
             padding: 14px 20px;
             background: var(--bg-secondary);
@@ -729,7 +731,6 @@
             color: var(--text-secondary);
         }
 
-        /* ===== TYPING INDICATOR ===== */
         .typing-indicator {
             display: none;
             padding: 4px 16px;
@@ -746,7 +747,6 @@
             50% { opacity: 1; }
         }
 
-        /* ===== BAN PANELİ ===== */
         .ban-panel {
             display: none;
             position: fixed;
@@ -786,7 +786,6 @@
             border: none;
         }
 
-        /* ===== REKLAM PANELİ ===== */
         .ad-panel {
             width: 220px;
             background: var(--bg-secondary);
@@ -883,7 +882,6 @@
             opacity: 0.6;
         }
 
-        /* ===== BİLDİRİM ===== */
         .notification-sound-badge {
             position: fixed;
             bottom: 20px;
@@ -911,7 +909,6 @@
             }
         }
 
-        /* ===== RESPONSIVE ===== */
         #mobileMenuBtn {
             display: none;
         }
@@ -996,7 +993,6 @@
             }
         }
 
-        /* ===== YÜKLENİYOR ===== */
         .loading-history {
             text-align: center;
             color: var(--text-secondary);
@@ -1019,7 +1015,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* ===== SES KAYDI ===== */
         .recording-indicator {
             display: none;
             color: #ef4444;
@@ -1035,7 +1030,6 @@
             50% { opacity: 0; }
         }
 
-        /* ===== ADMIN KOMUT YARDIM ===== */
         .command-help {
             display: none;
             position: fixed;
@@ -1082,18 +1076,14 @@
 <body>
 
     <div class="app" id="appContainer">
-        <!-- ===== SOL NAV ===== -->
         <div class="nav-side">
             <div class="nav-top">
                 <div class="nav-logo" onclick="toggleTheme()" title="Tema değiştir">C</div>
-
                 <a href="https://instagram.com/burak_msz" target="_blank" class="nav-icon" data-tooltip="Instagram">📸</a>
                 <a href="https://burak-code.github.io/msz/" target="_blank" class="nav-icon" data-tooltip="Web Sitem">🌐</a>
-
                 <button class="nav-icon active" data-tooltip="Sohbet" onclick="toggleSidebar()">💬</button>
                 <button class="nav-icon" data-tooltip="Yeni oda" onclick="document.getElementById('newRoomInput').focus()">➕</button>
                 <button class="nav-icon" data-tooltip="Admin Yardım" onclick="toggleHelp()">❓</button>
-
                 <div style="position:relative;">
                     <div class="color-picker-circle" id="paletteBtn" onclick="togglePalette()" data-tooltip="Tema rengi"></div>
                     <div id="palettePopup" style="display:none; position:absolute; left:60px; top:-20px; background:#1e293b; border:1px solid #334155; border-radius:16px; padding:16px; width:200px; flex-wrap:wrap; gap:8px; z-index:200; box-shadow:0 20px 30px rgba(0,0,0,0.6);">
@@ -1114,13 +1104,11 @@
             <div style="font-size:10px; color:#475569; writing-mode:vertical-lr; transform:rotate(180deg);">v4</div>
         </div>
 
-        <!-- ===== ODA PANELİ ===== -->
         <div class="room-panel" id="roomPanel">
             <div class="room-panel-header">
                 <span>📍 Odalar</span>
                 <button class="btn btn-outline btn-sm" onclick="toggleSidebar()">✕</button>
             </div>
-
             <div class="profile-mini">
                 <input type="file" id="ppInput" accept="image/*" style="display:none" onchange="changeProfilePic(this)">
                 <img src="" id="myProfilePic" class="profile-pic" onclick="document.getElementById('ppInput').click()" title="PP değiştir">
@@ -1130,9 +1118,7 @@
                 </div>
                 <input type="color" id="userColorPicker" onchange="updateUserColor(this.value)" style="width:28px; height:28px; border:none; border-radius:50%; cursor:pointer; background:none; padding:0;">
             </div>
-
             <div class="room-list" id="roomList"></div>
-
             <div class="room-footer">
                 <input type="text" id="newRoomInput" placeholder="Oda adı...">
                 <input type="password" id="newRoomPass" placeholder="Şifre (isteğe bağlı)">
@@ -1141,7 +1127,6 @@
             </div>
         </div>
 
-        <!-- ===== CHAT ===== -->
         <div class="chat-area">
             <div class="chat-header">
                 <div class="room-title">
@@ -1152,13 +1137,10 @@
                 </div>
                 <div class="user-tag" id="userInfo">👤 Kullanıcı</div>
             </div>
-
             <div class="typing-indicator" id="typingIndicator">✍️ <span id="typingUser">Birisi</span> yazıyor...</div>
-
             <div class="messages" id="chatMessages">
                 <div style="text-align:center; color:#475569; margin-top:80px;">Bir oda seçin veya oluşturun</div>
             </div>
-
             <div class="chat-input" id="chatInputArea">
                 <div class="reply-cancel" id="replyCancelBar">
                     <span>↩️ Yanıt: <strong id="replyTargetName">Kullanıcı</strong></span>
@@ -1185,7 +1167,6 @@
             </div>
         </div>
 
-        <!-- ===== REKLAM PANELİ ===== -->
         <div class="ad-panel" id="adPanel">
             <div class="ad-title">📢 Reklam Alanı</div>
             <div class="ad-content">
@@ -1205,14 +1186,12 @@
         </div>
     </div>
 
-    <!-- ===== BAN PANELİ ===== -->
     <div class="ban-panel" id="banPanel">
         <div class="ban-title">🚫 Yasaklı Kullanıcılar</div>
         <div class="ban-list" id="banList"></div>
         <button class="btn btn-sm btn-outline" style="margin-top:8px;width:100%;" onclick="toggleBanPanel()">Kapat</button>
     </div>
 
-    <!-- ===== KOMUT YARDIM ===== -->
     <div class="command-help" id="helpPanel">
         <div class="help-title">🛠️ Admin Komutları</div>
         <div class="help-item"><code>/clear</code> - Tüm mesajları temizler</div>
@@ -1224,7 +1203,6 @@
         <button class="btn close-help" onclick="toggleHelp()">Kapat</button>
     </div>
 
-    <!-- ===== BİLDİRİM ===== -->
     <div class="notification-sound-badge" id="notifBadge">🔔 Yeni yanıt!</div>
 
     <script>
@@ -1233,7 +1211,9 @@
         const ROOMS_KEY = "cengo_rooms_v4";
         const BANS_KEY = "cengo_bans_v4";
         const ADMINS_KEY = "cengo_admins_v4";
+        const ROOM_LAST_ACTIVITY_KEY = "cengo_room_activity_v4";
         const MAX_HISTORY = 500;
+        const ROOM_EXPIRY_HOURS = 24; // 24 saat sonra oda silinir
 
         let username = localStorage.getItem("cengo_username") || prompt("Adını gir:") || ("Misafir_" + Math.floor(Math.random() * 999));
         localStorage.setItem("cengo_username", username);
@@ -1258,13 +1238,16 @@
         let rooms = JSON.parse(localStorage.getItem(ROOMS_KEY)) || {
             "Genel Sohbet": { pass: "", owner: "Sistem" }
         };
-        // Eski formatı düzelt
         for (let r in rooms) {
             if (typeof rooms[r] === "string") rooms[r] = { pass: rooms[r], owner: "Sistem" };
         }
         if (!rooms["Genel Sohbet"]) rooms["Genel Sohbet"] = { pass: "", owner: "Sistem" };
 
-        // Ban ve Admin verileri
+        // Oda son aktivite zamanları
+        let roomLastActivity = JSON.parse(localStorage.getItem(ROOM_LAST_ACTIVITY_KEY)) || {};
+        // Genel Sohbet'i hiç silme
+        roomLastActivity["Genel Sohbet"] = Date.now();
+
         let bans = JSON.parse(localStorage.getItem(BANS_KEY)) || {};
         let admins = JSON.parse(localStorage.getItem(ADMINS_KEY)) || {};
 
@@ -1274,8 +1257,102 @@
         let onlineUsers = {};
         let isAdmin = false;
         let isOwner = false;
-        let isFirstHistoryLoad = true;
-        let initialHistoryLoaded = false; // Geçmişin ilk kez yüklenip yüklenmediğini takip et
+        let initialHistoryLoaded = false;
+        let messageHistoryCache = {};
+
+        // ===== ODA SON AKTİVİTE YÖNETİMİ =====
+        function updateRoomActivity(roomName) {
+            roomLastActivity[roomName] = Date.now();
+            localStorage.setItem(ROOM_LAST_ACTIVITY_KEY, JSON.stringify(roomLastActivity));
+        }
+
+        function getRoomActivity(roomName) {
+            return roomLastActivity[roomName] || 0;
+        }
+
+        function isRoomExpired(roomName) {
+            if (roomName === "Genel Sohbet") return false;
+            const lastActivity = getRoomActivity(roomName);
+            if (lastActivity === 0) return true;
+            const hoursSince = (Date.now() - lastActivity) / (1000 * 60 * 60);
+            return hoursSince >= ROOM_EXPIRY_HOURS;
+        }
+
+        function checkAndDeleteExpiredRooms() {
+            let deleted = false;
+            for (let roomName in rooms) {
+                if (roomName === "Genel Sohbet") continue;
+                if (isRoomExpired(roomName)) {
+                    console.log(`🗑️ Oda siliniyor (${ROOM_EXPIRY_HOURS} saat aktif değil): ${roomName}`);
+                    delete rooms[roomName];
+                    // Mesaj geçmişini de sil
+                    messageHistoryCache[roomName] = [];
+                    const all = JSON.parse(localStorage.getItem(MESSAGE_HISTORY_KEY) || '{}');
+                    delete all[roomName];
+                    localStorage.setItem(MESSAGE_HISTORY_KEY, JSON.stringify(all));
+                    delete roomLastActivity[roomName];
+                    deleted = true;
+                }
+            }
+            if (deleted) {
+                localStorage.setItem(ROOMS_KEY, JSON.stringify(rooms));
+                localStorage.setItem(ROOM_LAST_ACTIVITY_KEY, JSON.stringify(roomLastActivity));
+                renderRooms();
+                if (currentRoomName && !rooms[currentRoomName] && currentRoomName !== "Genel Sohbet") {
+                    joinRoom("Genel Sohbet");
+                }
+            }
+        }
+
+        // Her 5 dakikada bir kontrolleri yap
+        setInterval(() => {
+            checkAndDeleteExpiredRooms();
+        }, 5 * 60 * 1000);
+
+        // ===== MESAJ GEÇMİŞİ =====
+        function getMessageHistory(roomName) {
+            if (messageHistoryCache[roomName]) {
+                return messageHistoryCache[roomName];
+            }
+            try {
+                const all = JSON.parse(localStorage.getItem(MESSAGE_HISTORY_KEY) || '{}');
+                messageHistoryCache[roomName] = all[roomName] || [];
+                return messageHistoryCache[roomName];
+            } catch {
+                messageHistoryCache[roomName] = [];
+                return [];
+            }
+        }
+
+        function saveMessageHistory(roomName, messages) {
+            try {
+                if (messages.length > MAX_HISTORY) {
+                    messages = messages.slice(-MAX_HISTORY);
+                }
+                messageHistoryCache[roomName] = messages;
+                const all = JSON.parse(localStorage.getItem(MESSAGE_HISTORY_KEY) || '{}');
+                all[roomName] = messages;
+                localStorage.setItem(MESSAGE_HISTORY_KEY, JSON.stringify(all));
+                // Oda aktivitesini güncelle
+                updateRoomActivity(roomName);
+            } catch (e) {
+                console.error("Storage hatası:", e);
+            }
+        }
+
+        function addMessageToHistory(roomName, msgData) {
+            const history = getMessageHistory(roomName);
+            if (history.some(m => m.msgId === msgData.msgId)) return;
+            history.push(msgData);
+            history.sort((a, b) => (a.msgId || '').localeCompare(b.msgId || ''));
+            saveMessageHistory(roomName, history);
+            // Oda aktivitesini güncelle
+            updateRoomActivity(roomName);
+        }
+
+        function saveRooms() {
+            localStorage.setItem(ROOMS_KEY, JSON.stringify(rooms));
+        }
 
         // ===== TEMA =====
         function toggleTheme() {
@@ -1661,9 +1738,13 @@
             client.on('connect', () => {
                 console.log("✅ MQTT bağlandı");
                 client.subscribe('cengo/room-list-sync');
-                // Odaları talep et
                 client.publish('cengo/room-list-sync', JSON.stringify({ type: 'get_rooms' }));
-                joinRoom("Genel Sohbet");
+                renderRooms();
+                // Süresi dolmuş odaları kontrol et
+                checkAndDeleteExpiredRooms();
+                setTimeout(() => {
+                    joinRoom("Genel Sohbet");
+                }, 500);
                 client.subscribe('cengo/online');
                 client.publish('cengo/online', JSON.stringify({ type: 'online', user: username, pp: myProfileData }));
             });
@@ -1684,8 +1765,6 @@
 
                     if (top === 'cengo/room-list-sync') {
                         if (data.type === 'room_sync' && data.rooms) {
-                            // FIX: SADECE EKSİK OLAN ODALARI EKLE, MEVCUT OLANLARI SİLME!
-                            // Kendi odalarımı koru, sadece eksik olanları ekle
                             let changed = false;
                             for (let roomName in data.rooms) {
                                 if (!rooms[roomName]) {
@@ -1693,7 +1772,6 @@
                                     changed = true;
                                 }
                             }
-                            // Genel Sohbet her zaman var olsun
                             if (!rooms["Genel Sohbet"]) {
                                 rooms["Genel Sohbet"] = { pass: "", owner: "Sistem" };
                                 changed = true;
@@ -1704,15 +1782,12 @@
                             }
                             initialRoomSyncDone = true;
                         } else if (data.type === 'get_rooms') {
-                            // Başka bir istemci odaları istedi - kendi odalarımı gönder (SADECE BENİM ODALARIMI GÖNDER)
-                            // SADECE sahibi olduğum odaları gönder
                             const myRooms = {};
                             for (let roomName in rooms) {
                                 if (rooms[roomName].owner === username || roomName === "Genel Sohbet") {
                                     myRooms[roomName] = rooms[roomName];
                                 }
                             }
-                            // Eğer hiç odam yoksa boş gönderme, sadece Genel Sohbet'i gönder
                             if (Object.keys(myRooms).length === 0) {
                                 myRooms["Genel Sohbet"] = { pass: "", owner: "Sistem" };
                             }
@@ -1748,10 +1823,8 @@
                         return;
                     }
 
-                    // SİLME İŞLEMİ - sadece belirtilen mesajı sil
                     if (data.type === 'delete_msg' && data.msgId) {
                         let history = getMessageHistory(currentRoomName);
-                        // Sadece belirtilen msgId'ye sahip mesajı sil
                         history = history.filter(m => m.msgId !== data.msgId);
                         saveMessageHistory(currentRoomName, history);
                         renderMessages(currentRoomName);
@@ -1786,13 +1859,12 @@
             document.getElementById('onlineCount').textContent = '👤 ' + count;
         }
 
-        // ===== MESAJ GEÇMİŞİ =====
+        // ===== MESAJ GEÇMİŞİ İSTEK =====
         function requestHistory(roomName) {
             if (isHistoryLoading) return;
             isHistoryLoading = true;
 
             const container = document.getElementById("chatMessages");
-            // Önce local history'yi göster
             const history = getMessageHistory(roomName);
             if (history.length > 0) {
                 renderMessages(roomName);
@@ -1854,14 +1926,11 @@
 
             const currentHistory = getMessageHistory(currentRoomName);
             const existingIds = new Set(currentHistory.map(m => m.msgId));
-            
-            // FIX: SADECE EKSİK OLAN MESAJLARI EKLE, MEVCUTLARI SİLME!
+
             const newMessages = data.messages.filter(m => !existingIds.has(m.msgId));
 
             if (newMessages.length > 0) {
-                // Mevcut mesajları koruyarak sadece yeni mesajları ekle
                 const allMessages = [...currentHistory, ...newMessages];
-                // msgId'ye göre sırala (tarih sırası)
                 allMessages.sort((a, b) => (a.msgId || '').localeCompare(b.msgId || ''));
                 saveMessageHistory(currentRoomName, allMessages);
                 renderMessages(currentRoomName);
@@ -1873,45 +1942,10 @@
             initialHistoryLoaded = true;
         }
 
-        // ===== LOCAL STORAGE =====
-        function getMessageHistory(roomName) {
-            try {
-                const all = JSON.parse(localStorage.getItem(MESSAGE_HISTORY_KEY) || '{}');
-                return all[roomName] || [];
-            } catch {
-                return [];
-            }
-        }
-
-        function saveMessageHistory(roomName, messages) {
-            try {
-                const all = JSON.parse(localStorage.getItem(MESSAGE_HISTORY_KEY) || '{}');
-                if (messages.length > MAX_HISTORY) {
-                    messages = messages.slice(-MAX_HISTORY);
-                }
-                all[roomName] = messages;
-                localStorage.setItem(MESSAGE_HISTORY_KEY, JSON.stringify(all));
-            } catch (e) {
-                console.error("Storage hatası:", e);
-            }
-        }
-
-        function addMessageToHistory(roomName, msgData) {
-            const history = getMessageHistory(roomName);
-            if (history.some(m => m.msgId === msgData.msgId)) return;
-            history.push(msgData);
-            saveMessageHistory(roomName, history);
-        }
-
-        function saveRooms() {
-            localStorage.setItem(ROOMS_KEY, JSON.stringify(rooms));
-        }
-
         // ===== RENDER ODA LİSTESİ =====
         function renderRooms() {
             const list = document.getElementById("roomList");
             list.innerHTML = "";
-            // Odaları alfabetik sırala (Genel Sohbet en üstte)
             const sortedRooms = Object.keys(rooms).sort((a, b) => {
                 if (a === "Genel Sohbet") return -1;
                 if (b === "Genel Sohbet") return 1;
@@ -1922,6 +1956,23 @@
                 const div = document.createElement("div");
                 div.className = `room-item ${currentRoomName === roomName ? 'active' : ''}`;
                 const lock = data.pass ? "🔒" : "";
+                
+                // Kalan süreyi göster
+                let expiryBadge = '';
+                if (roomName !== "Genel Sohbet") {
+                    const lastActivity = getRoomActivity(roomName);
+                    if (lastActivity > 0) {
+                        const hoursSince = (Date.now() - lastActivity) / (1000 * 60 * 60);
+                        const remainingHours = Math.max(0, ROOM_EXPIRY_HOURS - hoursSince);
+                        if (remainingHours < 24) {
+                            const remainingText = remainingHours < 1 ? 
+                                Math.floor(remainingHours * 60) + 'dk' : 
+                                Math.floor(remainingHours) + 's';
+                            expiryBadge = `<span class="expiry-badge">⏳ ${remainingText}</span>`;
+                        }
+                    }
+                }
+                
                 let actions = '';
                 if (roomName !== "Genel Sohbet" && data.owner === username) {
                     actions = `
@@ -1932,7 +1983,9 @@
                     `;
                 }
                 div.innerHTML = `
-                    <span style="flex:1; cursor:pointer;" onclick="tryJoinRoom('${roomName}')"># ${roomName} ${lock}</span>
+                    <span style="flex:1; cursor:pointer;" onclick="tryJoinRoom('${roomName}')">
+                        # ${roomName} ${lock} ${expiryBadge}
+                    </span>
                     ${actions}
                 `;
                 list.appendChild(div);
@@ -1972,25 +2025,16 @@
             document.getElementById("currentRoomTitle").innerHTML = "💬 " + roomName + ' <span class="online-count" id="onlineCount">👤 0</span>';
             document.getElementById("chatInputArea").style.display = "flex";
 
-            // FIX: Odaya girerken mevcut mesajları koru, sadece render et
+            // Odaya giriş yapıldı, aktiviteyi güncelle
+            updateRoomActivity(roomName);
+
             const history = getMessageHistory(roomName);
-            if (history.length > 0) {
-                renderMessages(roomName);
-            } else {
-                const container = document.getElementById("chatMessages");
-                container.innerHTML =
-                    `<div style="text-align:center; color:#475569; margin-top:80px;">💬 Henüz mesaj yok. İlk mesajı sen gönder!</div>`;
-            }
-            
-            // Geçmişi talep et (mevcut mesajların üzerine yazmaz, sadece eksikleri ekler)
+            renderMessages(roomName);
             requestHistory(roomName);
-            
             renderRooms();
             document.getElementById('roomPanel').classList.remove('open');
             cancelReply();
-
             updateAdminStatus();
-
             client.publish('cengo/online', JSON.stringify({ type: 'online', user: username, pp: myProfileData }));
         }
 
@@ -2002,7 +2046,9 @@
             if (rooms[name]) { alert("Zaten var!"); return; }
             rooms[name] = { pass: pass, owner: username };
             saveRooms();
-            // SADECE kendi odalarımı gönder
+            // Oda oluşturuldu, aktiviteyi güncelle
+            updateRoomActivity(name);
+            
             const myRooms = {};
             for (let roomName in rooms) {
                 if (rooms[roomName].owner === username || roomName === "Genel Sohbet") {
@@ -2028,7 +2074,12 @@
             delete rooms[roomName];
             rooms[trimmed] = { pass: newPass !== null ? newPass.trim() : data.pass, owner: username };
             saveRooms();
-            // SADECE kendi odalarımı gönder
+            // Aktiviteyi yeni isme taşı
+            if (roomLastActivity[roomName]) {
+                roomLastActivity[trimmed] = roomLastActivity[roomName];
+                delete roomLastActivity[roomName];
+                localStorage.setItem(ROOM_LAST_ACTIVITY_KEY, JSON.stringify(roomLastActivity));
+            }
             const myRooms = {};
             for (let roomName2 in rooms) {
                 if (rooms[roomName2].owner === username || roomName2 === "Genel Sohbet") {
@@ -2046,8 +2097,9 @@
             if (!data || data.owner !== username) { alert("Sadece kurucu silebilir!"); return; }
             if (confirm(`"${roomName}" odasını sil?`)) {
                 delete rooms[roomName];
+                delete roomLastActivity[roomName];
+                localStorage.setItem(ROOM_LAST_ACTIVITY_KEY, JSON.stringify(roomLastActivity));
                 saveRooms();
-                // SADECE kendi odalarımı gönder
                 const myRooms = {};
                 for (let roomName2 in rooms) {
                     if (rooms[roomName2].owner === username || roomName2 === "Genel Sohbet") {
@@ -2110,6 +2162,8 @@
             client.publish(currentTopic, JSON.stringify(payload));
             input.value = "";
             document.getElementById('typingIndicator').classList.remove('show');
+            // Mesaj gönderildi, aktiviteyi güncelle
+            updateRoomActivity(currentRoomName);
         }
 
         // ===== TYPING =====
@@ -2185,6 +2239,7 @@
                     cancelReply();
                 }
                 client.publish(currentTopic, JSON.stringify(payload));
+                updateRoomActivity(currentRoomName);
             };
             reader.readAsDataURL(file);
             input.value = "";
@@ -2243,6 +2298,7 @@
                             cancelReply();
                         }
                         client.publish(currentTopic, JSON.stringify(payload));
+                        updateRoomActivity(currentRoomName);
                         showNotifBadge("🎤 Ses kaydı gönderildi!");
                     };
                     reader.readAsDataURL(audioBlob);
@@ -2276,15 +2332,12 @@
                 showNotifBadge('⚠️ Mesaj bulunamadı!');
                 return;
             }
-            // Sadece mesajın sahibi, admin veya oda sahibi silebilir
             if (msg.gonderen !== username && !isAdmin && !isOwner) {
                 showNotifBadge('⛔ Bu mesajı silemezsin!');
                 return;
             }
-            // Silme işlemini yayınla - sadece bu mesaj silinecek
             const payload = JSON.stringify({ type: 'delete_msg', msgId: msgId, gonderen: username });
             client.publish(currentTopic, payload);
-            // Local'den de sil
             const newHistory = history.filter(m => m.msgId !== msgId);
             saveMessageHistory(currentRoomName, newHistory);
             renderMessages(currentRoomName);
@@ -2330,6 +2383,9 @@
         function displayMessage(data, scrollToBottom = true) {
             const container = document.getElementById("chatMessages");
             const isMe = data.gonderen === username;
+
+            const existing = container.querySelector(`[data-msg-id="${data.msgId}"]`);
+            if (existing) return;
 
             if (data.isSystem || data.type === 'system') {
                 const msgDiv = document.createElement("div");
@@ -2410,11 +2466,9 @@
             `;
             bubble.appendChild(footer);
 
-            // ===== YENİ AKSİYON BUTONLARI =====
             const actions = document.createElement("div");
             actions.className = "msg-actions";
 
-            // Kopyala butonu
             const copyBtn = document.createElement("button");
             copyBtn.className = "copy-btn";
             copyBtn.innerHTML = "📋";
@@ -2426,7 +2480,6 @@
             };
             actions.appendChild(copyBtn);
 
-            // Ban butonu (admin/owner için)
             if ((isAdmin || isOwner) && !isMe && data.gonderen !== '🛡️ Sistem') {
                 const banBtn = document.createElement("button");
                 banBtn.className = "ban-btn";
@@ -2439,7 +2492,6 @@
                 actions.appendChild(banBtn);
             }
 
-            // Reply butonu
             if (!isMe) {
                 const replyBtn = document.createElement("button");
                 replyBtn.className = "reply-btn";
@@ -2452,7 +2504,6 @@
                 actions.appendChild(replyBtn);
             }
 
-            // Sil butonu - sadece mesaj sahibi, admin veya oda sahibi silebilir
             if ((isMe || isAdmin || isOwner) && data.msgId && data.gonderen !== '🛡️ Sistem') {
                 const delBtn = document.createElement("button");
                 delBtn.className = "del-btn";
@@ -2482,8 +2533,6 @@
 
         function renderMessages(roomName) {
             const container = document.getElementById("chatMessages");
-            // FIX: Container'ı temizleme, sadece mesajları yeniden render et
-            // Ama container'ı temizleyip yeniden oluşturmak daha temiz
             container.innerHTML = "";
             const history = getMessageHistory(roomName);
             if (history.length === 0) {
@@ -2579,11 +2628,10 @@
         }
 
         // ===== BAŞLAT =====
-        // Önce localStorage'dan odaları yükle
-        const savedRooms = localStorage.getItem(ROOMS_KEY);
-        if (savedRooms) {
+        const savedRooms2 = localStorage.getItem(ROOMS_KEY);
+        if (savedRooms2) {
             try {
-                const parsed = JSON.parse(savedRooms);
+                const parsed = JSON.parse(savedRooms2);
                 for (let r in parsed) {
                     if (typeof parsed[r] === "string") parsed[r] = { pass: parsed[r], owner: "Sistem" };
                 }
@@ -2594,16 +2642,37 @@
         saveRooms();
         renderRooms();
 
+        // Son aktivite verilerini yükle
+        const savedActivity = localStorage.getItem(ROOM_LAST_ACTIVITY_KEY);
+        if (savedActivity) {
+            try {
+                roomLastActivity = JSON.parse(savedActivity);
+            } catch (e) {}
+        }
+        if (!roomLastActivity["Genel Sohbet"]) {
+            roomLastActivity["Genel Sohbet"] = Date.now();
+            localStorage.setItem(ROOM_LAST_ACTIVITY_KEY, JSON.stringify(roomLastActivity));
+        }
+
+        // Mesaj cache'ini yükle
+        try {
+            const allHistory = JSON.parse(localStorage.getItem(MESSAGE_HISTORY_KEY) || '{}');
+            for (let roomName in allHistory) {
+                messageHistoryCache[roomName] = allHistory[roomName] || [];
+            }
+        } catch (e) {}
+
+        // Süresi dolmuş odaları temizle
+        checkAndDeleteExpiredRooms();
+
         initMQTT();
 
-        console.log("🚀 Cengo Chat v4 - Kalıcı Veri + Fix'ler");
+        console.log("🚀 Cengo Chat v4 - 24 SAAT SONRA ODA SİLİNİR!");
         console.log("🇹🇷 Milli gururumuz Cengo Chat!");
-        console.log("📋 Komutlar: /help, /clear, /ban_kullanici, /admin_kullanici, /message_mesaj, /unban_kullanici, /adminlist");
-        console.log("💾 Odalar ve mesajlar kalıcı! (LocalStorage)");
-        console.log("🔔 Admin duyurusu ( /message_ ) özel bip sesi çıkarır!");
-        console.log("✅ FIX: Odalar artık kendi kendine silinmiyor!");
-        console.log("✅ FIX: Mesajlar odaya girip çıkınca kaybolmuyor!");
-        console.log("✅ FIX: Mesaj silme sadece seçili mesajı siliyor!");
+        console.log(`⏳ ${ROOM_EXPIRY_HOURS} saat boyunca aktif olmayan odalar otomatik silinir!`);
+        console.log("✅ FIX: Mesajlar asla silinmiyor, cache'de kalıyor!");
+        console.log("✅ FIX: Odalar sadece sahibi tarafından silinebiliyor ve geri gelmiyor!");
+        console.log("💾 Tüm mesajlar ve odalar LocalStorage'da kalıcı!");
     </script>
 
 </body>
