@@ -314,6 +314,16 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
         }
 
+        .room-footer .backup-buttons {
+            display: flex;
+            gap: 6px;
+        }
+        .room-footer .backup-buttons button {
+            flex: 1;
+            font-size: 11px;
+            padding: 6px 10px;
+        }
+
         .btn {
             padding: 10px 14px;
             border-radius: var(--radius-sm);
@@ -354,6 +364,12 @@
         }
         .btn-danger:hover {
             background: #dc2626;
+        }
+        .btn-success {
+            background: #10b981;
+        }
+        .btn-success:hover {
+            background: #059669;
         }
 
         .chat-area {
@@ -1069,6 +1085,27 @@
             margin-top: 12px;
             width: 100%;
         }
+
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 12px 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            display: none;
+            animation: fadeUp 0.3s ease;
+            max-width: 90%;
+            text-align: center;
+        }
+        .toast.show {
+            display: block;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js">
     </script>
@@ -1124,6 +1161,11 @@
                 <input type="password" id="newRoomPass" placeholder="Şifre (isteğe bağlı)">
                 <button class="btn" onclick="createRoom()">✨ Oda Oluştur</button>
                 <button class="btn btn-outline btn-sm" onclick="toggleBanPanel()">🚫 Ban Listesi</button>
+                <div class="backup-buttons">
+                    <button class="btn btn-success btn-sm" onclick="exportAllData()">💾 Yedekle</button>
+                    <button class="btn btn-warning btn-sm" onclick="document.getElementById('restoreInput').click()">📂 Yükle</button>
+                    <input type="file" id="restoreInput" accept=".json" style="display:none" onchange="importAllData(this.files[0])">
+                </div>
             </div>
         </div>
 
@@ -1204,6 +1246,7 @@
     </div>
 
     <div class="notification-sound-badge" id="notifBadge">🔔 Yeni yanıt!</div>
+    <div class="toast" id="toast"></div>
 
     <script>
         // ===== SABİTLER =====
@@ -1212,8 +1255,9 @@
         const BANS_KEY = "cengo_bans_v4";
         const ADMINS_KEY = "cengo_admins_v4";
         const ROOM_LAST_ACTIVITY_KEY = "cengo_room_activity_v4";
+        const BACKUP_KEY = "cengo_backup_data";
         const MAX_HISTORY = 500;
-        const ROOM_EXPIRY_HOURS = 24; // 24 saat sonra oda silinir
+        const ROOM_EXPIRY_HOURS = 24;
 
         let username = localStorage.getItem("cengo_username") || prompt("Adını gir:") || ("Misafir_" + Math.floor(Math.random() * 999));
         localStorage.setItem("cengo_username", username);
@@ -1243,9 +1287,7 @@
         }
         if (!rooms["Genel Sohbet"]) rooms["Genel Sohbet"] = { pass: "", owner: "Sistem" };
 
-        // Oda son aktivite zamanları
         let roomLastActivity = JSON.parse(localStorage.getItem(ROOM_LAST_ACTIVITY_KEY)) || {};
-        // Genel Sohbet'i hiç silme
         roomLastActivity["Genel Sohbet"] = Date.now();
 
         let bans = JSON.parse(localStorage.getItem(BANS_KEY)) || {};
@@ -1259,6 +1301,134 @@
         let isOwner = false;
         let initialHistoryLoaded = false;
         let messageHistoryCache = {};
+
+        // ===== TOAST =====
+        function showToast(text, duration = 3000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = text;
+            toast.classList.add('show');
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
+        }
+
+        // ===== YEDEKLEME SİSTEMİ =====
+        function getAllData() {
+            return {
+                messages: messageHistoryCache,
+                rooms: rooms,
+                bans: bans,
+                admins: admins,
+                lastActivity: roomLastActivity,
+                timestamp: Date.now(),
+                version: "4.0"
+            };
+        }
+
+        function exportAllData() {
+            const data = getAllData();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const date = new Date().toISOString().slice(0, 10);
+            a.download = `cengo_yedek_${date}_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('✅ Yedek başarıyla indirildi!');
+        }
+
+        function importAllData(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    // Verileri yükle
+                    if (data.messages) messageHistoryCache = data.messages;
+                    if (data.rooms) {
+                        rooms = data.rooms;
+                        if (!rooms["Genel Sohbet"]) {
+                            rooms["Genel Sohbet"] = { pass: "", owner: "Sistem" };
+                        }
+                    }
+                    if (data.bans) bans = data.bans;
+                    if (data.admins) admins = data.admins;
+                    if (data.lastActivity) {
+                        roomLastActivity = data.lastActivity;
+                        if (!roomLastActivity["Genel Sohbet"]) {
+                            roomLastActivity["Genel Sohbet"] = Date.now();
+                        }
+                    }
+
+                    // LocalStorage'ı güncelle
+                    localStorage.setItem(MESSAGE_HISTORY_KEY, JSON.stringify(messageHistoryCache));
+                    localStorage.setItem(ROOMS_KEY, JSON.stringify(rooms));
+                    localStorage.setItem(BANS_KEY, JSON.stringify(bans));
+                    localStorage.setItem(ADMINS_KEY, JSON.stringify(admins));
+                    localStorage.setItem(ROOM_LAST_ACTIVITY_KEY, JSON.stringify(roomLastActivity));
+                    localStorage.setItem(BACKUP_KEY, JSON.stringify(getAllData()));
+
+                    showToast('✅ Yedek başarıyla yüklendi! Sayfa yenileniyor...');
+                    setTimeout(() => location.reload(), 1500);
+                } catch(err) {
+                    showToast('❌ Hata: Geçersiz dosya!');
+                    console.error(err);
+                }
+            };
+            reader.readAsText(file);
+            document.getElementById('restoreInput').value = '';
+        }
+
+        function autoBackup() {
+            try {
+                const data = getAllData();
+                localStorage.setItem(BACKUP_KEY, JSON.stringify(data));
+                
+                // Her 100 mesajda bir otomatik yedek indir (opsiyonel)
+                const totalMessages = Object.values(messageHistoryCache).reduce((acc, arr) => acc + arr.length, 0);
+                if (totalMessages > 0 && totalMessages % 100 === 0) {
+                    showToast('💾 100 mesaja ulaşıldı, otomatik yedek alınıyor...');
+                    exportAllData();
+                }
+            } catch(e) {
+                console.error('Otomatik yedekleme hatası:', e);
+            }
+        }
+
+        function loadBackup() {
+            try {
+                const backup = localStorage.getItem(BACKUP_KEY);
+                if (backup) {
+                    const data = JSON.parse(backup);
+                    // Sadece son 24 saat içindeki yedeği yükle
+                    if (data.timestamp && Date.now() - data.timestamp < 86400000) {
+                        if (data.messages && Object.keys(data.messages).length > 0) {
+                            messageHistoryCache = data.messages;
+                        }
+                        if (data.rooms) {
+                            rooms = data.rooms;
+                            if (!rooms["Genel Sohbet"]) {
+                                rooms["Genel Sohbet"] = { pass: "", owner: "Sistem" };
+                            }
+                        }
+                        if (data.bans) bans = data.bans;
+                        if (data.admins) admins = data.admins;
+                        if (data.lastActivity) {
+                            roomLastActivity = data.lastActivity;
+                            if (!roomLastActivity["Genel Sohbet"]) {
+                                roomLastActivity["Genel Sohbet"] = Date.now();
+                            }
+                        }
+                        console.log('✅ Otomatik yedek yüklendi!');
+                    }
+                }
+            } catch(e) {
+                console.error('Yedek yükleme hatası:', e);
+            }
+        }
 
         // ===== ODA SON AKTİVİTE YÖNETİMİ =====
         function updateRoomActivity(roomName) {
@@ -1285,7 +1455,6 @@
                 if (isRoomExpired(roomName)) {
                     console.log(`🗑️ Oda siliniyor (${ROOM_EXPIRY_HOURS} saat aktif değil): ${roomName}`);
                     delete rooms[roomName];
-                    // Mesaj geçmişini de sil
                     messageHistoryCache[roomName] = [];
                     const all = JSON.parse(localStorage.getItem(MESSAGE_HISTORY_KEY) || '{}');
                     delete all[roomName];
@@ -1301,10 +1470,10 @@
                 if (currentRoomName && !rooms[currentRoomName] && currentRoomName !== "Genel Sohbet") {
                     joinRoom("Genel Sohbet");
                 }
+                autoBackup();
             }
         }
 
-        // Her 5 dakikada bir kontrolleri yap
         setInterval(() => {
             checkAndDeleteExpiredRooms();
         }, 5 * 60 * 1000);
@@ -1333,8 +1502,8 @@
                 const all = JSON.parse(localStorage.getItem(MESSAGE_HISTORY_KEY) || '{}');
                 all[roomName] = messages;
                 localStorage.setItem(MESSAGE_HISTORY_KEY, JSON.stringify(all));
-                // Oda aktivitesini güncelle
                 updateRoomActivity(roomName);
+                autoBackup();
             } catch (e) {
                 console.error("Storage hatası:", e);
             }
@@ -1346,12 +1515,11 @@
             history.push(msgData);
             history.sort((a, b) => (a.msgId || '').localeCompare(b.msgId || ''));
             saveMessageHistory(roomName, history);
-            // Oda aktivitesini güncelle
-            updateRoomActivity(roomName);
         }
 
         function saveRooms() {
             localStorage.setItem(ROOMS_KEY, JSON.stringify(rooms));
+            autoBackup();
         }
 
         // ===== TEMA =====
@@ -1373,7 +1541,7 @@
             localStorage.setItem('cengo_sound', soundEnabled);
             document.getElementById("userInfo").innerHTML = "👤 " + username + ' <span style="font-size:10px;cursor:pointer;" onclick="toggleSound()">' + (soundEnabled ?
                 "🔊" : "🔇") + '</span>';
-            showNotifBadge(soundEnabled ? "🔊 Ses açıldı" : "🔇 Ses kapatıldı");
+            showToast(soundEnabled ? "🔊 Ses açıldı" : "🔇 Ses kapatıldı");
         }
 
         function playNotificationSound() {
@@ -1400,7 +1568,7 @@
                     osc2.start();
                     setTimeout(() => { osc2.stop(); }, 150);
                 }, 180);
-            } catch (e) { /* sessiz */ }
+            } catch (e) {}
         }
 
         function playAdminAnnouncementSound() {
@@ -1438,14 +1606,11 @@
                     osc3.start();
                     setTimeout(() => { osc3.stop(); }, 200);
                 }, 360);
-            } catch (e) { /* sessiz */ }
+            } catch (e) {}
         }
 
         function showNotifBadge(text) {
-            const badge = document.getElementById('notifBadge');
-            badge.textContent = text;
-            badge.style.display = 'block';
-            setTimeout(() => { badge.style.display = 'none'; }, 4000);
+            showToast(text);
         }
 
         // ===== EMOJI =====
@@ -1484,6 +1649,7 @@
             bans[key] = Date.now() + durationMs;
             localStorage.setItem(BANS_KEY, JSON.stringify(bans));
             renderBanList(roomName);
+            autoBackup();
         }
 
         function unbanUser(user, roomName) {
@@ -1491,6 +1657,7 @@
             delete bans[key];
             localStorage.setItem(BANS_KEY, JSON.stringify(bans));
             renderBanList(roomName);
+            autoBackup();
         }
 
         function renderBanList(roomName) {
@@ -1540,12 +1707,14 @@
             admins[key] = true;
             localStorage.setItem(ADMINS_KEY, JSON.stringify(admins));
             sendSystemMessage(`👑 ${user} admin yetkisi aldı!`);
+            autoBackup();
         }
 
         function removeAdmin(user, roomName) {
             const key = roomName + '|' + user;
             delete admins[key];
             localStorage.setItem(ADMINS_KEY, JSON.stringify(admins));
+            autoBackup();
         }
 
         function updateAdminStatus() {
@@ -1620,9 +1789,9 @@
                     adminList.push(roomData.owner + ' 👑');
                 }
                 if (adminList.length === 0) {
-                    showNotifBadge('📋 Admin listesi boş');
+                    showToast('📋 Admin listesi boş');
                 } else {
-                    showNotifBadge('📋 Adminler: ' + adminList.join(', '));
+                    showToast('📋 Adminler: ' + adminList.join(', '));
                 }
                 return true;
             }
@@ -1631,13 +1800,13 @@
             const isOwnerOrAdmin = isOwner || isAdmin;
 
             if (!isOwnerOrAdmin) {
-                showNotifBadge('⛔ Bu komut için yetkin yok!');
+                showToast('⛔ Bu komut için yetkin yok!');
                 return true;
             }
 
             if (trimmed === '/clear') {
                 if (currentRoomName === "Genel Sohbet") {
-                    showNotifBadge('⛔ Genel Sohbet temizlenemez!');
+                    showToast('⛔ Genel Sohbet temizlenemez!');
                     return true;
                 }
                 if (confirm(`"${currentRoomName}" odasındaki tüm mesajlar silinecek. Onaylıyor musun?`)) {
@@ -1653,71 +1822,71 @@
             if (trimmed.startsWith('/ban_')) {
                 const target = trimmed.substring(5).trim();
                 if (!target) {
-                    showNotifBadge('⚠️ Kullanıcı adı girin: /ban_kullanıcı');
+                    showToast('⚠️ Kullanıcı adı girin: /ban_kullanıcı');
                     return true;
                 }
                 if (target === username) {
-                    showNotifBadge('⚠️ Kendini banlayamazsın!');
+                    showToast('⚠️ Kendini banlayamazsın!');
                     return true;
                 }
                 if (isAdminUser(target, currentRoomName) || (rooms[currentRoomName] && rooms[currentRoomName].owner ===
                         target)) {
-                    showNotifBadge('⛔ Admin veya sahibi banlayamazsın!');
+                    showToast('⛔ Admin veya sahibi banlayamazsın!');
                     return true;
                 }
                 banUser(target, currentRoomName, 3600000);
                 sendSystemMessage(`🚫 ${target} 1 saatliğine banlandı!`);
-                showNotifBadge(`🚫 ${target} banlandı!`);
+                showToast(`🚫 ${target} banlandı!`);
                 return true;
             }
 
             if (trimmed.startsWith('/unban_')) {
                 const target = trimmed.substring(7).trim();
                 if (!target) {
-                    showNotifBadge('⚠️ Kullanıcı adı girin: /unban_kullanıcı');
+                    showToast('⚠️ Kullanıcı adı girin: /unban_kullanıcı');
                     return true;
                 }
                 unbanUser(target, currentRoomName);
                 sendSystemMessage(`✅ ${target} banı kaldırıldı!`);
-                showNotifBadge(`✅ ${target} banı kaldırıldı!`);
+                showToast(`✅ ${target} banı kaldırıldı!`);
                 return true;
             }
 
             if (trimmed.startsWith('/admin_')) {
                 const target = trimmed.substring(6).trim();
                 if (!target) {
-                    showNotifBadge('⚠️ Kullanıcı adı girin: /admin_kullanıcı');
+                    showToast('⚠️ Kullanıcı adı girin: /admin_kullanıcı');
                     return true;
                 }
                 if (target === username) {
-                    showNotifBadge('⚠️ Kendine admin veremezsin!');
+                    showToast('⚠️ Kendine admin veremezsin!');
                     return true;
                 }
                 if (isAdminUser(target, currentRoomName)) {
-                    showNotifBadge(`⚠️ ${target} zaten admin!`);
+                    showToast(`⚠️ ${target} zaten admin!`);
                     return true;
                 }
                 if (rooms[currentRoomName] && rooms[currentRoomName].owner === target) {
-                    showNotifBadge(`⚠️ ${target} oda sahibi zaten!`);
+                    showToast(`⚠️ ${target} oda sahibi zaten!`);
                     return true;
                 }
                 setAdmin(target, currentRoomName);
-                showNotifBadge(`👑 ${target} admin yapıldı!`);
+                showToast(`👑 ${target} admin yapıldı!`);
                 return true;
             }
 
             if (trimmed.startsWith('/message_')) {
                 const msg = trimmed.substring(9).trim();
                 if (!msg) {
-                    showNotifBadge('⚠️ Mesaj girin: /message_önemli mesaj');
+                    showToast('⚠️ Mesaj girin: /message_önemli mesaj');
                     return true;
                 }
                 const fullMsg = `📢 ÖNEMLİ DUYURU - ${username}: ${msg}`;
                 sendSystemMessage(fullMsg);
-                showNotifBadge('📢 Duyuru gönderildi!');
+                showToast('📢 Duyuru gönderildi!');
                 playAdminAnnouncementSound();
                 setTimeout(() => {
-                    showNotifBadge('🔔 ADMIN DUYURUSU: ' + msg.substring(0, 30) + (msg.length > 30 ? '…' : ''));
+                    showToast('🔔 ADMIN DUYURUSU: ' + msg.substring(0, 30) + (msg.length > 30 ? '…' : ''));
                 }, 500);
                 return true;
             }
@@ -1740,7 +1909,6 @@
                 client.subscribe('cengo/room-list-sync');
                 client.publish('cengo/room-list-sync', JSON.stringify({ type: 'get_rooms' }));
                 renderRooms();
-                // Süresi dolmuş odaları kontrol et
                 checkAndDeleteExpiredRooms();
                 setTimeout(() => {
                     joinRoom("Genel Sohbet");
@@ -1834,13 +2002,13 @@
                     if (data.type === 'clear_chat') {
                         saveMessageHistory(currentRoomName, []);
                         renderMessages(currentRoomName);
-                        showNotifBadge("🧹 Sohbet temizlendi!");
+                        showToast("🧹 Sohbet temizlendi!");
                         return;
                     }
 
                     if (data.replyTo && data.replyTo.gonderen === username) {
                         playNotificationSound();
-                        showNotifBadge("🔔 " + data.gonderen + " sana yanıt verdi!");
+                        showToast("🔔 " + data.gonderen + " sana yanıt verdi!");
                     }
                     addMessageToHistory(currentRoomName, data);
                     displayMessage(data, true);
@@ -1957,7 +2125,6 @@
                 div.className = `room-item ${currentRoomName === roomName ? 'active' : ''}`;
                 const lock = data.pass ? "🔒" : "";
                 
-                // Kalan süreyi göster
                 let expiryBadge = '';
                 if (roomName !== "Genel Sohbet") {
                     const lastActivity = getRoomActivity(roomName);
@@ -2025,7 +2192,6 @@
             document.getElementById("currentRoomTitle").innerHTML = "💬 " + roomName + ' <span class="online-count" id="onlineCount">👤 0</span>';
             document.getElementById("chatInputArea").style.display = "flex";
 
-            // Odaya giriş yapıldı, aktiviteyi güncelle
             updateRoomActivity(roomName);
 
             const history = getMessageHistory(roomName);
@@ -2046,7 +2212,6 @@
             if (rooms[name]) { alert("Zaten var!"); return; }
             rooms[name] = { pass: pass, owner: username };
             saveRooms();
-            // Oda oluşturuldu, aktiviteyi güncelle
             updateRoomActivity(name);
             
             const myRooms = {};
@@ -2074,7 +2239,6 @@
             delete rooms[roomName];
             rooms[trimmed] = { pass: newPass !== null ? newPass.trim() : data.pass, owner: username };
             saveRooms();
-            // Aktiviteyi yeni isme taşı
             if (roomLastActivity[roomName]) {
                 roomLastActivity[trimmed] = roomLastActivity[roomName];
                 delete roomLastActivity[roomName];
@@ -2120,7 +2284,7 @@
 
             if (isUserBanned(username, currentRoomName)) {
                 const remaining = getBanRemaining(username, currentRoomName);
-                showNotifBadge(`⛔ Banlandın! Kalan süre: ${remaining} dakika`);
+                showToast(`⛔ Banlandın! Kalan süre: ${remaining} dakika`);
                 input.value = "";
                 return;
             }
@@ -2162,7 +2326,6 @@
             client.publish(currentTopic, JSON.stringify(payload));
             input.value = "";
             document.getElementById('typingIndicator').classList.remove('show');
-            // Mesaj gönderildi, aktiviteyi güncelle
             updateRoomActivity(currentRoomName);
         }
 
@@ -2201,7 +2364,7 @@
 
             if (isUserBanned(username, currentRoomName)) {
                 const remaining = getBanRemaining(username, currentRoomName);
-                showNotifBadge(`⛔ Banlandın! Kalan süre: ${remaining} dakika`);
+                showToast(`⛔ Banlandın! Kalan süre: ${remaining} dakika`);
                 input.value = "";
                 return;
             }
@@ -2257,7 +2420,7 @@
         function startRecording() {
             if (!currentTopic) return;
             if (isUserBanned(username, currentRoomName)) {
-                showNotifBadge('⛔ Banlandın! Ses kaydı gönderemezsin.');
+                showToast('⛔ Banlandın! Ses kaydı gönderemezsin.');
                 return;
             }
             navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
@@ -2299,7 +2462,7 @@
                         }
                         client.publish(currentTopic, JSON.stringify(payload));
                         updateRoomActivity(currentRoomName);
-                        showNotifBadge("🎤 Ses kaydı gönderildi!");
+                        showToast("🎤 Ses kaydı gönderildi!");
                     };
                     reader.readAsDataURL(audioBlob);
                     stream.getTracks().forEach(track => track.stop());
@@ -2311,7 +2474,7 @@
                 isRecording = true;
                 document.getElementById('recordingIndicator').classList.add('show');
                 document.getElementById('voiceBtn').textContent = '⏹️';
-                showNotifBadge("🔴 Kayıt başladı...");
+                showToast("🔴 Kayıt başladı...");
             }).catch(() => {
                 alert("Mikrofon izni gerekli!");
             });
@@ -2329,11 +2492,11 @@
             const history = getMessageHistory(currentRoomName);
             const msg = history.find(m => m.msgId === msgId);
             if (!msg) {
-                showNotifBadge('⚠️ Mesaj bulunamadı!');
+                showToast('⚠️ Mesaj bulunamadı!');
                 return;
             }
             if (msg.gonderen !== username && !isAdmin && !isOwner) {
-                showNotifBadge('⛔ Bu mesajı silemezsin!');
+                showToast('⛔ Bu mesajı silemezsin!');
                 return;
             }
             const payload = JSON.stringify({ type: 'delete_msg', msgId: msgId, gonderen: username });
@@ -2346,7 +2509,7 @@
         // ===== MESAJ KOPYALA =====
         function copyMessage(text) {
             navigator.clipboard.writeText(text).then(() => {
-                showNotifBadge("📋 Kopyalandı!");
+                showToast("📋 Kopyalandı!");
             }).catch(() => {
                 const textarea = document.createElement('textarea');
                 textarea.value = text;
@@ -2354,28 +2517,28 @@
                 textarea.select();
                 document.execCommand('copy');
                 textarea.remove();
-                showNotifBadge("📋 Kopyalandı!");
+                showToast("📋 Kopyalandı!");
             });
         }
 
         // ===== BAN BUTONU =====
         function banUserFromMsg(user) {
             if (!isAdmin && !isOwner) {
-                showNotifBadge('⛔ Yetkin yok!');
+                showToast('⛔ Yetkin yok!');
                 return;
             }
             if (user === username) {
-                showNotifBadge('⚠️ Kendini banlayamazsın!');
+                showToast('⚠️ Kendini banlayamazsın!');
                 return;
             }
             if (isAdminUser(user, currentRoomName) || (rooms[currentRoomName] && rooms[currentRoomName].owner === user)) {
-                showNotifBadge('⛔ Admin veya sahibi banlayamazsın!');
+                showToast('⛔ Admin veya sahibi banlayamazsın!');
                 return;
             }
             if (confirm(`${user} kullanıcısını 1 saat banlamak istediğine emin misin?`)) {
                 banUser(user, currentRoomName, 3600000);
                 sendSystemMessage(`🚫 ${user} 1 saatliğine banlandı! (${username} tarafından)`);
-                showNotifBadge(`🚫 ${user} banlandı!`);
+                showToast(`🚫 ${user} banlandı!`);
             }
         }
 
@@ -2627,7 +2790,15 @@
             document.getElementById('roomPanel').classList.toggle('open');
         }
 
+        // ===== SAYFA KAPANMADAN ÖNCE YEDEKLE =====
+        window.addEventListener('beforeunload', function() {
+            autoBackup();
+        });
+
         // ===== BAŞLAT =====
+        // Önce yedeği yükle
+        loadBackup();
+
         const savedRooms2 = localStorage.getItem(ROOMS_KEY);
         if (savedRooms2) {
             try {
@@ -2642,7 +2813,6 @@
         saveRooms();
         renderRooms();
 
-        // Son aktivite verilerini yükle
         const savedActivity = localStorage.getItem(ROOM_LAST_ACTIVITY_KEY);
         if (savedActivity) {
             try {
@@ -2654,7 +2824,6 @@
             localStorage.setItem(ROOM_LAST_ACTIVITY_KEY, JSON.stringify(roomLastActivity));
         }
 
-        // Mesaj cache'ini yükle
         try {
             const allHistory = JSON.parse(localStorage.getItem(MESSAGE_HISTORY_KEY) || '{}');
             for (let roomName in allHistory) {
@@ -2662,17 +2831,25 @@
             }
         } catch (e) {}
 
-        // Süresi dolmuş odaları temizle
         checkAndDeleteExpiredRooms();
+
+        // Her 5 dakikada bir otomatik yedekle
+        setInterval(autoBackup, 5 * 60 * 1000);
+        // Her 30 saniyede bir küçük yedekle (sık kayıp için)
+        setInterval(() => {
+            try {
+                localStorage.setItem(BACKUP_KEY, JSON.stringify(getAllData()));
+            } catch(e) {}
+        }, 30000);
 
         initMQTT();
 
         console.log("🚀 Cengo Chat v4 - 24 SAAT SONRA ODA SİLİNİR!");
         console.log("🇹🇷 Milli gururumuz Cengo Chat!");
         console.log(`⏳ ${ROOM_EXPIRY_HOURS} saat boyunca aktif olmayan odalar otomatik silinir!`);
-        console.log("✅ FIX: Mesajlar asla silinmiyor, cache'de kalıyor!");
-        console.log("✅ FIX: Odalar sadece sahibi tarafından silinebiliyor ve geri gelmiyor!");
-        console.log("💾 Tüm mesajlar ve odalar LocalStorage'da kalıcı!");
+        console.log("💾 Tüm veriler LocalStorage + Otomatik JSON Yedekleme ile korunuyor!");
+        console.log("📦 Yedekle butonu ile manuel yedek alabilirsin!");
+        console.log("📂 Yükle butonu ile yedekten geri yükleyebilirsin!");
     </script>
 
 </body>
