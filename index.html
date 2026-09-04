@@ -1096,11 +1096,155 @@
         .toast.show {
             display: block;
         }
+
+        /* ===== GİRİŞ MODALI ===== */
+        .entry-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(6px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+            padding: 20px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .entry-modal-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            max-width: 560px;
+            width: 100%;
+            padding: 32px 28px;
+            box-shadow: 0 40px 60px rgba(0,0,0,0.7);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .entry-modal-card .close-btn {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .entry-modal-card .close-btn:hover {
+            color: var(--text-primary);
+            transform: rotate(90deg);
+        }
+        .entry-modal-card .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+        .entry-modal-card .modal-sub {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        .entry-modal-card .modal-sub strong {
+            color: var(--text-primary);
+        }
+        .entry-modal-card .modal-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 16px 0;
+        }
+        .entry-modal-card .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 12px;
+        }
+        .entry-modal-card .modal-footer .btn {
+            padding: 12px 36px;
+            font-size: 16px;
+            border-radius: 40px;
+            background: #10b981;
+        }
+        .entry-modal-card .modal-footer .btn:hover {
+            background: #059669;
+        }
+        .entry-modal-card .small-note {
+            font-size: 12px;
+            color: var(--text-secondary);
+            opacity: 0.7;
+            margin-top: 8px;
+            text-align: center;
+        }
+        .entry-modal-card .social-links {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .entry-modal-card .social-links a {
+            color: var(--text-secondary);
+            font-size: 13px;
+            text-decoration: none;
+            background: var(--bg-card);
+            padding: 4px 14px;
+            border-radius: 20px;
+            transition: var(--transition);
+            border: 1px solid var(--border-color);
+        }
+        .entry-modal-card .social-links a:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js">
     </script>
 </head>
 <body>
+
+    <!-- GİRİŞ MODALI (başlangıçta açılır) -->
+    <div class="entry-modal" id="entryModal">
+        <div class="entry-modal-card">
+            <button class="close-btn" onclick="closeEntryModal()">✕</button>
+            <div class="modal-title">🚀 cengO Chat</div>
+            <div class="modal-sub">
+                <strong>@burak_msz</strong> tarafından yapılmıştır.<br>
+                Sol taraftan web sitesine ve Instagram'a ulaşabilirsiniz.
+            </div>
+            <div class="modal-sub" style="color: var(--owner-color);">
+                ⚠️ Cengo henüz hatalarla dolu. Lütfen geliştirmemiz için Instagram hesabına geri bildirim yapınız.<br>
+                <span style="background: var(--bg-card); padding: 2px 10px; border-radius: 20px; font-size: 13px;">Geri bildirim için Instagram DM'de başa <strong>cengO-bb</strong> yazınız.</span>
+            </div>
+            <div class="modal-sub" style="color: var(--admin-color);">
+                🙏 Lütfen saygı kurallarını çiğnemeyin. Cengo halen gelişme aşamasındadır.
+            </div>
+            <div class="modal-divider"></div>
+            <div class="modal-sub" style="font-size: 13px;">
+                🌐 Web sitemizden Linktree'ye, YouTube'a ve daha bir sürü projelerimize ulaşabilirsiniz.
+            </div>
+            <div class="social-links">
+                <a href="https://instagram.com/burak_msz" target="_blank">📸 Instagram</a>
+                <a href="https://burak-code.github.io/msz/" target="_blank">🌐 Web Sitem</a>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeEntryModal()">✅ TAMAM</button>
+            </div>
+            <div class="small-note">cengO v4 • hoş geldiniz</div>
+        </div>
+    </div>
 
     <div class="app" id="appContainer">
         <div class="nav-side">
@@ -1234,6 +1378,16 @@
     <div class="toast" id="toast"></div>
 
     <script>
+        // ===== GİRİŞ MODALI KONTROLÜ =====
+        function closeEntryModal() {
+            const modal = document.getElementById('entryModal');
+            modal.style.display = 'none';
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
         // ===== SABİTLER =====
         const MESSAGE_HISTORY_KEY = "cengo_history_v4";
         const ROOMS_KEY = "cengo_rooms_v4";
@@ -1298,7 +1452,7 @@
             }, duration);
         }
 
-        // ===== YEDEKLEME SİSTEMİ (arka planda, otomatik kurtarma için) =====
+        // ===== YEDEKLEME SİSTEMİ =====
         function getAllData() {
             return {
                 messages: messageHistoryCache,
@@ -1325,7 +1479,6 @@
                 const backup = localStorage.getItem(BACKUP_KEY);
                 if (backup) {
                     const data = JSON.parse(backup);
-                    // Sadece son 24 saat içindeki yedeği yükle
                     if (data.timestamp && Date.now() - data.timestamp < 86400000) {
                         if (data.messages && Object.keys(data.messages).length > 0) {
                             messageHistoryCache = data.messages;
@@ -1352,7 +1505,6 @@
             }
         }
 
-        // ===== ODA SON AKTİVİTE YÖNETİMİ =====
         function updateRoomActivity(roomName) {
             roomLastActivity[roomName] = Date.now();
             localStorage.setItem(ROOM_LAST_ACTIVITY_KEY, JSON.stringify(roomLastActivity));
@@ -1400,7 +1552,6 @@
             checkAndDeleteExpiredRooms();
         }, 5 * 60 * 1000);
 
-        // ===== MESAJ GEÇMİŞİ =====
         function getMessageHistory(roomName) {
             if (messageHistoryCache[roomName]) {
                 return messageHistoryCache[roomName];
@@ -1438,13 +1589,11 @@
                     return;
                 } catch (e) {
                     attempts++;
-                    // Depolama alanı doluysa: önce en eski medya (resim/ses/dosya) içeriğini hafiflet
                     const mediaIndex = toSave.findIndex(m => m.type === 'image' || m.type === 'audio' || m.type === 'file');
                     if (mediaIndex !== -1) {
                         toSave = toSave.slice();
                         toSave[mediaIndex] = Object.assign({}, toSave[mediaIndex], { content: '', trimmed: true });
                     } else if (toSave.length > 20) {
-                        // Medya kalmadıysa en eski mesajların bir kısmını at
                         toSave = toSave.slice(Math.ceil(toSave.length * 0.2));
                     } else {
                         console.error("Storage hatası: yer yok, kaydedilemedi.", e);
@@ -1470,7 +1619,6 @@
             autoBackup();
         }
 
-        // ===== TEMA =====
         function toggleTheme() {
             const current = document.documentElement.getAttribute('data-theme');
             const newTheme = current === 'light' ? 'dark' : 'light';
@@ -1483,7 +1631,6 @@
             document.documentElement.setAttribute('data-theme', savedTheme);
         }
 
-        // ===== SES =====
         function toggleSound() {
             soundEnabled = !soundEnabled;
             localStorage.setItem('cengo_sound', soundEnabled);
@@ -1561,14 +1708,12 @@
             showToast(text);
         }
 
-        // ===== EMOJI =====
         function addEmoji(emoji) {
             const input = document.getElementById("msgText");
             input.value += emoji;
             input.focus();
         }
 
-        // ===== BAN YÖNETİMİ =====
         function isUserBanned(user, roomName) {
             const key = roomName + '|' + user;
             if (bans[key]) {
@@ -1644,7 +1789,6 @@
             }
         }
 
-        // ===== ADMIN YÖNETİMİ =====
         function isAdminUser(user, roomName) {
             const key = roomName + '|' + user;
             return admins[key] === true;
@@ -1694,7 +1838,6 @@
             }
         }
 
-        // ===== SİSTEM MESAJI =====
         function sendSystemMessage(text) {
             if (!currentTopic) return;
             const now = new Date();
@@ -1715,7 +1858,6 @@
             client.publish(currentTopic, JSON.stringify(payload));
         }
 
-        // ===== KOMUT İŞLEME =====
         function handleCommand(text) {
             const trimmed = text.trim();
 
@@ -1842,13 +1984,9 @@
             return false;
         }
 
-        // ===== HELP PANELİ =====
         function toggleHelp() {
             document.getElementById('helpPanel').classList.toggle('show');
         }
-
-        // ===== MQTT =====
-        let initialRoomSyncDone = false;
 
         function initMQTT() {
             client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
@@ -1969,13 +2107,11 @@
             });
         }
 
-        // ===== ONLINE SAYACI =====
         function updateOnlineCount() {
             const count = Object.keys(onlineUsers).length;
             document.getElementById('onlineCount').textContent = '👤 ' + count;
         }
 
-        // ===== MESAJ GEÇMİŞİ İSTEK =====
         function requestHistory(roomName) {
             if (isHistoryLoading) return;
             isHistoryLoading = true;
@@ -2058,7 +2194,6 @@
             initialHistoryLoaded = true;
         }
 
-        // ===== RENDER ODA LİSTESİ =====
         function renderRooms() {
             const list = document.getElementById("roomList");
             list.innerHTML = "";
@@ -2107,7 +2242,6 @@
             }
         }
 
-        // ===== ODA YÖNETİMİ =====
         function tryJoinRoom(roomName) {
             if (isUserBanned(username, roomName)) {
                 const remaining = getBanRemaining(username, roomName);
@@ -2224,7 +2358,6 @@
             }
         }
 
-        // ===== MESAJ GÖNDERME =====
         function sendMessage() {
             const input = document.getElementById("msgText");
             let text = input.value.trim();
@@ -2277,7 +2410,6 @@
             updateRoomActivity(currentRoomName);
         }
 
-        // ===== TYPING =====
         function handleTyping() {
             if (!currentTopic) return;
             if (isUserBanned(username, currentRoomName)) {
@@ -2291,7 +2423,6 @@
             }, 1500);
         }
 
-        // ===== REPLY =====
         function cancelReply() {
             replyTarget = null;
             document.getElementById("replyCancelBar").classList.remove('show');
@@ -2305,7 +2436,6 @@
             document.getElementById("msgText").focus();
         }
 
-        // ===== DOSYA GÖNDER =====
         function handleFile(input) {
             const file = input.files[0];
             if (!file || !currentTopic) return;
@@ -2356,7 +2486,6 @@
             input.value = "";
         }
 
-        // ===== SES KAYDI =====
         function toggleRecording() {
             if (isRecording) {
                 stopRecording();
@@ -2434,7 +2563,6 @@
             }
         }
 
-        // ===== MESAJ SİLME =====
         function deleteMessage(msgId) {
             if (!currentTopic || !currentRoomName) return;
             const history = getMessageHistory(currentRoomName);
@@ -2454,7 +2582,6 @@
             renderMessages(currentRoomName);
         }
 
-        // ===== MESAJ KOPYALA =====
         function copyMessage(text) {
             navigator.clipboard.writeText(text).then(() => {
                 showToast("📋 Kopyalandı!");
@@ -2469,7 +2596,6 @@
             });
         }
 
-        // ===== BAN BUTONU =====
         function banUserFromMsg(user) {
             if (!isAdmin && !isOwner) {
                 showToast('⛔ Yetkin yok!');
@@ -2490,7 +2616,6 @@
             }
         }
 
-        // ===== MESAJ GÖSTER =====
         function displayMessage(data, scrollToBottom = true) {
             const container = document.getElementById("chatMessages");
             const isMe = data.gonderen === username;
@@ -2655,7 +2780,6 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // ===== KULLANICI AYARLARI =====
         function changeUsername() {
             const newName = prompt("Yeni ad:", username);
             if (newName && newName.trim()) {
@@ -2704,7 +2828,6 @@
             localStorage.setItem("cengo_color", color);
         }
 
-        // ===== TEMA =====
         function togglePalette() {
             const popup = document.getElementById('palettePopup');
             popup.style.display = popup.style.display === 'none' ? 'flex' : 'none';
@@ -2733,18 +2856,15 @@
             document.getElementById('palettePopup').style.display = 'none';
         }
 
-        // ===== SIDEBAR TOGGLE =====
         function toggleSidebar() {
             document.getElementById('roomPanel').classList.toggle('open');
         }
 
-        // ===== SAYFA KAPANMADAN ÖNCE YEDEKLE =====
         window.addEventListener('beforeunload', function() {
             autoBackup();
         });
 
         // ===== BAŞLAT =====
-        // Önce yedeği yükle
         loadBackup();
 
         const savedRooms2 = localStorage.getItem(ROOMS_KEY);
@@ -2781,9 +2901,7 @@
 
         checkAndDeleteExpiredRooms();
 
-        // Her 5 dakikada bir otomatik yedekle
         setInterval(autoBackup, 5 * 60 * 1000);
-        // Her 30 saniyede bir küçük yedekle (sık kayıp için)
         setInterval(() => {
             try {
                 localStorage.setItem(BACKUP_KEY, JSON.stringify(getAllData()));
