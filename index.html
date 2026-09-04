@@ -30,6 +30,7 @@
             --msg-other-text: #f1f5f9;
             --admin-color: #f59e0b;
             --owner-color: #ef4444;
+            --warning-color: #f97316;
         }
 
         [data-theme="light"] {
@@ -236,6 +237,10 @@
         .profile-info .badge.owner-badge {
             background: var(--owner-color);
             color: #fff;
+        }
+        .profile-info .badge.warning-badge {
+            background: var(--warning-color);
+            color: #000;
         }
 
         .room-list {
@@ -463,6 +468,19 @@
             font-size: 13px;
         }
 
+        .msg.warning-msg {
+            align-self: center;
+            max-width: 90%;
+        }
+        .msg.warning-msg .msg-bubble {
+            background: var(--warning-color);
+            color: #000;
+            border: 2px solid var(--owner-color);
+            font-weight: 600;
+            text-align: center;
+            font-size: 13px;
+        }
+
         .msg-avatar {
             width: 38px;
             height: 38px;
@@ -560,6 +578,14 @@
             font-size: 8px;
             background: var(--owner-color);
             color: #fff;
+            padding: 1px 6px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+        .msg-footer .censored-tag {
+            font-size: 8px;
+            background: var(--warning-color);
+            color: #000;
             padding: 1px 6px;
             border-radius: 10px;
             font-weight: 700;
@@ -1256,7 +1282,6 @@
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 0.7; transform: translateY(0); }
         }
-        /* Patlama efektleri için particle'lar */
         .thx-particle {
             position: fixed;
             width: 12px;
@@ -1279,7 +1304,7 @@
     <!-- 💖THX PATLAMA OVERLAY -->
     <div class="thx-overlay" id="thxOverlay">
         <div class="thx-text">💖THX</div>
-        <div class="thx-sub">✨ Teşekkürler MSZ Ailesi! ✨</div>
+        <div class="thx-sub">✨ Teşekkürler Cengo Ailesi! ✨</div>
     </div>
 
     <!-- GİRİŞ MODALI (başlangıçta açılır) -->
@@ -1450,7 +1475,6 @@
     <script>
         // ===== GİRİŞ MODALI KONTROLÜ =====
 
-        // Direkt kapat (çarpıya basınca) - hiçbir efekt yok, direkt site açılır
         function closeEntryModalDirect() {
             const modal = document.getElementById('entryModal');
             modal.style.display = 'none';
@@ -1458,32 +1482,22 @@
             setTimeout(() => {
                 modal.style.display = 'none';
             }, 300);
-            // Site zaten açık, sadece modal kapanıyor
         }
 
-        // TAMAM butonuna basınca - 💖THX patlama efektli
         function closeEntryModalWithThx() {
-            // Önce modalı kapat
             const modal = document.getElementById('entryModal');
             modal.style.display = 'none';
             modal.style.opacity = '0';
             setTimeout(() => {
                 modal.style.display = 'none';
             }, 300);
-
-            // 💖THX efektini göster
             showThxEffect();
         }
 
-        // 💖THX Patlama efekti
         function showThxEffect() {
             const overlay = document.getElementById('thxOverlay');
             overlay.classList.add('show');
-
-            // Patlama particle'ları oluştur
             createThxParticles();
-
-            // 2.5 saniye sonra overlay'i kaldır ve siteyi göster
             setTimeout(() => {
                 overlay.classList.remove('show');
                 overlay.style.display = 'none';
@@ -1498,7 +1512,6 @@
                 const particle = document.createElement('div');
                 particle.className = 'thx-particle';
                 
-                // Rastgele renk veya emoji
                 const isEmoji = Math.random() > 0.5;
                 if (isEmoji) {
                     particle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
@@ -1513,13 +1526,11 @@
                     particle.style.height = size + 'px';
                 }
                 
-                // Rastgele yön ve mesafe
                 const angle = Math.random() * 2 * Math.PI;
                 const distance = 200 + Math.random() * 500;
                 const tx = Math.cos(angle) * distance;
                 const ty = Math.sin(angle) * distance - 100;
                 
-                // Merkezden başla (ekranın ortası)
                 const startX = window.innerWidth / 2;
                 const startY = window.innerHeight / 2;
                 particle.style.left = startX + 'px';
@@ -1527,19 +1538,193 @@
                 particle.style.setProperty('--tx', tx + 'px');
                 particle.style.setProperty('--ty', ty + 'px');
                 
-                // Rastgele gecikme
                 particle.style.animationDelay = (Math.random() * 0.4) + 's';
                 
                 document.body.appendChild(particle);
                 
-                // Animasyon bitince temizle
                 setTimeout(() => {
                     particle.remove();
                 }, 1800 + Math.random() * 500);
             }
         }
 
-        // ===== SABİTLER (orijinal kodun devamı) =====
+        // ============================================================
+        // ===== KÜFÜR ENGELLEME SİSTEMİ =====
+        // ============================================================
+
+        // Yasaklı kelimeler listesi (Türkçe küfürler, hakaretler, argo)
+        const BAD_WORDS = [
+            // Türkçe küfürler
+            'amk', 'amına', 'amına koyim', 'amına koyayım', 'amcık', 'amık', 'anan', 'ananı', 'anani', 
+            'annen', 'anneni', 'aptal', 'aşağılık', 'avradını', 'avrat', 
+            'boku', 'boktan', 'bok', 'boka', 'bokunda', 
+            'çük', 'çükünü', 'çüküne', 'çükün',
+            'dalyarak', 'dallama', 'derdini', 'dingil', 'domal', 'domalt',
+            'embesil', 'enişte', 
+            'fahişe', 'feriştah', 
+            'gavat', 'gerzek', 'göt', 'göte', 'götü', 'götün', 'götünü', 'götünden', 'götveren',
+            'hain', 'hassiktir', 'hayvan', 'hıyar', 'hıyara', 'hıyarın', 
+            'ibne', 'ibnenin', 'ibneye', 'it', 'iti', 'itin',
+            'kaltak', 'karı', 'karını', 'karının', 'kodes', 'koduğun', 'kodumun', 'koyim', 'koyayım',
+            'lan', 'lun', 
+            'mal', 'mala', 'malın', 'manyak', 'manyakın', 'mına', 'mina', 
+            'oç', 'orospu', 'orospunun', 'orospu çocuğu', 'orospu evladı', 
+            'pezevenk', 'pis', 'piç', 'piçin', 'piçe',
+            'sakat', 'salak', 'siktir', 'sikeyim', 'sikim', 'sikimin', 'sikinde', 'sikine', 'sikini', 
+            'sikiyim', 'sikmiş', 'siksin', 'siksem', 'siktirgit', 'siktir et', 'siktirin', 
+            'sik', 'sike', 'siki', 'sikin', 'sikini', 'sikinde', 'sikine',
+            'sürtük', 
+            'şerefsiz', 
+            'taşak', 'taşağını', 'topuk', 'trol',
+            'ucube', 'ulan', 
+            'veled', 'vıcık', 
+            'yarak', 'yarağını', 'yarağına', 'yarağım', 'yavşak', 'yobaz',
+            'zıkkım', 
+            // İngilizce ve diğer yaygın küfürler
+            'fuck', 'fucking', 'shit', 'bitch', 'bastard', 'asshole', 'pussy', 'dick', 'cock',
+            'motherfucker', 'whore', 'slut', 'cunt', 'nigga', 'nigger', 
+            // Değiştirilmiş halleri (leetspeak)
+            '4mk', '4m1na', '4mık', '5iktir', '5ik', '5ikeyim'
+        ];
+
+        // Kullanıcı bazında küfür sayacı (oda bazında)
+        let swearCounter = {};
+
+        // Mesajı sansürle
+        function censorMessage(text) {
+            let censored = text;
+            let foundBadWords = [];
+            
+            // Kelimeleri kontrol et (büyük/küçük harf duyarsız)
+            const words = text.split(/\s+/);
+            for (let word of words) {
+                const lowerWord = word.toLowerCase();
+                // Noktalama işaretlerini temizle
+                const cleanWord = lowerWord.replace(/[.,!?;:()\[\]{}"']/g, '');
+                
+                for (let bad of BAD_WORDS) {
+                    if (cleanWord.includes(bad) || lowerWord.includes(bad)) {
+                        foundBadWords.push(bad);
+                        // Yıldızla değiştir (harf sayısı kadar *)
+                        const stars = '*'.repeat(word.length);
+                        // Sadece kelimeyi değiştir, büyük/küçük harf korunmaz
+                        censored = censored.replace(new RegExp(word, 'gi'), stars);
+                        break;
+                    }
+                }
+            }
+            
+            return {
+                text: censored,
+                censored: foundBadWords.length > 0,
+                badWords: foundBadWords
+            };
+        }
+
+        // Küfür sayacını güncelle
+        function updateSwearCounter(user, roomName) {
+            const key = roomName + '|' + user;
+            if (!swearCounter[key]) {
+                swearCounter[key] = 0;
+            }
+            swearCounter[key]++;
+            
+            // 3 küfür = uyarı, 5 küfür = 5 dakika ban, 10 küfür = 1 saat ban
+            const count = swearCounter[key];
+            
+            if (count === 3) {
+                sendSystemMessage(`⚠️ ${user} uyarıldı! (3. küfür) Lütfen argo kullanmayın!`);
+                showToast(`⚠️ ${user}, 3. küfür uyarısı!`);
+                playWarningSound();
+            } else if (count === 5) {
+                // 5 dakika ban
+                banUser(user, roomName, 300000);
+                sendSystemMessage(`🚫 ${user} 5 dakika banlandı! (5. küfür)`);
+                showToast(`🚫 ${user} 5 dakika banlandı!`);
+                playBanSound();
+                // Sayacı sıfırla
+                swearCounter[key] = 0;
+            } else if (count >= 10) {
+                // 1 saat ban
+                banUser(user, roomName, 3600000);
+                sendSystemMessage(`🚫 ${user} 1 saat banlandı! (10. küfür)`);
+                showToast(`🚫 ${user} 1 saat banlandı!`);
+                playBanSound();
+                swearCounter[key] = 0;
+            }
+        }
+
+        // Uyarı sesi
+        function playWarningSound() {
+            if (!soundEnabled) return;
+            try {
+                const ctx = new(window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 660;
+                osc.type = 'square';
+                gain.gain.value = 0.15;
+                osc.start();
+                setTimeout(() => { osc.stop(); }, 300);
+            } catch (e) {}
+        }
+
+        // Ban sesi
+        function playBanSound() {
+            if (!soundEnabled) return;
+            try {
+                const ctx = new(window.AudioContext || window.webkitAudioContext)();
+                const osc1 = ctx.createOscillator();
+                const gain1 = ctx.createGain();
+                osc1.connect(gain1);
+                gain1.connect(ctx.destination);
+                osc1.frequency.value = 440;
+                osc1.type = 'square';
+                gain1.gain.value = 0.2;
+                osc1.start();
+                setTimeout(() => { osc1.stop(); }, 200);
+                setTimeout(() => {
+                    const osc2 = ctx.createOscillator();
+                    const gain2 = ctx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(ctx.destination);
+                    osc2.frequency.value = 330;
+                    osc2.type = 'square';
+                    gain2.gain.value = 0.2;
+                    osc2.start();
+                    setTimeout(() => { osc2.stop(); }, 300);
+                }, 250);
+            } catch (e) {}
+        }
+
+        // Sistem mesajı gönderme (özel renkli)
+        function sendSystemMessage(text, isWarning = false) {
+            if (!currentTopic) return;
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            const fullDate = now.toLocaleString('tr-TR');
+            const msgId = Date.now() + '_sys_' + Math.random().toString(36).substr(2, 4);
+
+            const payload = {
+                type: isWarning ? 'warning' : 'system',
+                msgId: msgId,
+                gonderen: isWarning ? '⚠️ UYARI' : '🛡️ Sistem',
+                pp: '',
+                content: text,
+                time: timeStr,
+                fullDate: fullDate,
+                isSystem: true,
+                isWarning: isWarning
+            };
+            client.publish(currentTopic, JSON.stringify(payload));
+        }
+
+        // ============================================================
+        // ===== SABİTLER (DEVAMI) =====
+        // ============================================================
+
         const MESSAGE_HISTORY_KEY = "cengo_history_v4";
         const ROOMS_KEY = "cengo_rooms_v4";
         const BANS_KEY = "cengo_bans_v4";
@@ -1855,10 +2040,6 @@
             } catch (e) {}
         }
 
-        function showNotifBadge(text) {
-            showToast(text);
-        }
-
         function addEmoji(emoji) {
             const input = document.getElementById("msgText");
             input.value += emoji;
@@ -1987,26 +2168,6 @@
                 status.textContent = '🟢 Çevrimiçi';
                 status.className = 'badge';
             }
-        }
-
-        function sendSystemMessage(text) {
-            if (!currentTopic) return;
-            const now = new Date();
-            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-            const fullDate = now.toLocaleString('tr-TR');
-            const msgId = Date.now() + '_sys_' + Math.random().toString(36).substr(2, 4);
-
-            const payload = {
-                type: 'system',
-                msgId: msgId,
-                gonderen: '🛡️ Sistem',
-                pp: '',
-                content: text,
-                time: timeStr,
-                fullDate: fullDate,
-                isSystem: true
-            };
-            client.publish(currentTopic, JSON.stringify(payload));
         }
 
         function handleCommand(text) {
@@ -2241,6 +2402,23 @@
                         renderMessages(currentRoomName);
                         showToast("🧹 Sohbet temizlendi!");
                         return;
+                    }
+
+                    // KÜFÜR ENGELLEME: Gelen mesajı kontrol et
+                    if (data.type === 'text' && data.content) {
+                        const result = censorMessage(data.content);
+                        if (result.censored) {
+                            // Mesajı sansürlü olarak göster
+                            data.content = result.text;
+                            data.wasCensored = true;
+                            data.censoredWords = result.badWords;
+                            
+                            // Küfür sayacını güncelle (adminler hariç)
+                            if (!isAdminUser(data.gonderen, currentRoomName) && 
+                                !(rooms[currentRoomName] && rooms[currentRoomName].owner === data.gonderen)) {
+                                updateSwearCounter(data.gonderen, currentRoomName);
+                            }
+                        }
                     }
 
                     if (data.replyTo && data.replyTo.gonderen === username) {
@@ -2528,6 +2706,24 @@
                 }
             }
 
+            // ===== KÜFÜR ENGELLEME: Mesajı kontrol et =====
+            let censoredResult = censorMessage(text);
+            let finalText = censoredResult.text;
+            let wasCensored = censoredResult.censored;
+
+            // Eğer sansürlendiyse ve kullanıcı admin değilse sayacı güncelle
+            if (wasCensored && !isAdmin && !isOwner) {
+                updateSwearCounter(username, currentRoomName);
+                
+                // Eğer kullanıcı banlanmadıysa mesajı gönder (sansürlü)
+                if (!isUserBanned(username, currentRoomName)) {
+                    // Mesajı sansürlü olarak gönder
+                } else {
+                    input.value = "";
+                    return;
+                }
+            }
+
             const now = new Date();
             const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
             const fullDate = now.toLocaleString('tr-TR');
@@ -2539,11 +2735,12 @@
                 gonderen: username,
                 pp: myProfileData,
                 color: userBubbleColor,
-                content: text,
+                content: finalText,
                 time: timeStr,
                 fullDate: fullDate,
                 isAdmin: isAdmin || isOwner,
-                isOwner: isOwner
+                isOwner: isOwner,
+                wasCensored: wasCensored  // Mesajın sansürlendiğini belirt
             };
 
             if (replyTarget) {
@@ -2774,6 +2971,19 @@
             const existing = container.querySelector(`[data-msg-id="${data.msgId}"]`);
             if (existing) return;
 
+            // Uyarı mesajları (sistemden gelen uyarılar)
+            if (data.isWarning) {
+                const msgDiv = document.createElement("div");
+                msgDiv.className = "msg warning-msg";
+                const bubble = document.createElement("div");
+                bubble.className = "msg-bubble";
+                bubble.innerHTML = `<span>⚠️ ${data.content}</span>`;
+                msgDiv.appendChild(bubble);
+                container.appendChild(msgDiv);
+                if (scrollToBottom) container.scrollTop = container.scrollHeight;
+                return;
+            }
+
             if (data.isSystem || data.type === 'system') {
                 const msgDiv = document.createElement("div");
                 msgDiv.className = "msg system-msg";
@@ -2817,6 +3027,7 @@
 
             if (data.type === 'text') {
                 const span = document.createElement("span");
+                // Eğer sansürlendiyse ve gönderen admin değilse, metni göster (zaten sansürlü)
                 span.innerHTML = linkify(data.content);
                 bubble.appendChild(span);
             } else if (data.type === 'image') {
@@ -2845,6 +3056,7 @@
             let tags = '';
             if (data.isOwner) tags += '<span class="owner-tag">👑 Sahip</span> ';
             else if (data.isAdmin) tags += '<span class="admin-tag">🛡️ Admin</span> ';
+            if (data.wasCensored) tags += '<span class="censored-tag">🚫 Sansürlendi</span> ';
 
             footer.innerHTML = `
                 <span>~ ${data.gonderen}</span>
@@ -3061,10 +3273,10 @@
 
         initMQTT();
 
-        console.log("🚀 Cengo Chat v4 - 24 SAAT SONRA ODA SİLİNİR!");
+        console.log("🚀 Cengo Chat v4 - KÜFÜR ENGELLEME AKTİF!");
         console.log("🇹🇷 Milli gururumuz Cengo Chat!");
         console.log(`⏳ ${ROOM_EXPIRY_HOURS} saat boyunca aktif olmayan odalar otomatik silinir!`);
-        console.log("💾 Tüm veriler LocalStorage ile korunuyor, otomatik arka plan yedeği alınıyor!");
+        console.log("🔞 3 küfür = uyarı, 5 küfür = 5 dk ban, 10 küfür = 1 saat ban");
     </script>
 
 </body>
