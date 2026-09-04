@@ -314,16 +314,6 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
         }
 
-        .room-footer .backup-buttons {
-            display: flex;
-            gap: 6px;
-        }
-        .room-footer .backup-buttons button {
-            flex: 1;
-            font-size: 11px;
-            padding: 6px 10px;
-        }
-
         .btn {
             padding: 10px 14px;
             border-radius: var(--radius-sm);
@@ -1161,11 +1151,6 @@
                 <input type="password" id="newRoomPass" placeholder="Şifre (isteğe bağlı)">
                 <button class="btn" onclick="createRoom()">✨ Oda Oluştur</button>
                 <button class="btn btn-outline btn-sm" onclick="toggleBanPanel()">🚫 Ban Listesi</button>
-                <div class="backup-buttons">
-                    <button class="btn btn-success btn-sm" onclick="exportAllData()">💾 Yedekle</button>
-                    <button class="btn btn-warning btn-sm" onclick="document.getElementById('restoreInput').click()">📂 Yükle</button>
-                    <input type="file" id="restoreInput" accept=".json" style="display:none" onchange="importAllData(this.files[0])">
-                </div>
             </div>
         </div>
 
@@ -1313,7 +1298,7 @@
             }, duration);
         }
 
-        // ===== YEDEKLEME SİSTEMİ =====
+        // ===== YEDEKLEME SİSTEMİ (arka planda, otomatik kurtarma için) =====
         function getAllData() {
             return {
                 messages: messageHistoryCache,
@@ -1326,73 +1311,10 @@
             };
         }
 
-        function exportAllData() {
-            const data = getAllData();
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const date = new Date().toISOString().slice(0, 10);
-            a.download = `cengo_yedek_${date}_${Date.now()}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('✅ Yedek başarıyla indirildi!');
-        }
-
-        function importAllData(file) {
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    
-                    // Verileri yükle
-                    if (data.messages) messageHistoryCache = data.messages;
-                    if (data.rooms) {
-                        rooms = data.rooms;
-                        if (!rooms["Genel Sohbet"]) {
-                            rooms["Genel Sohbet"] = { pass: "", owner: "Sistem" };
-                        }
-                    }
-                    if (data.bans) bans = data.bans;
-                    if (data.admins) admins = data.admins;
-                    if (data.lastActivity) {
-                        roomLastActivity = data.lastActivity;
-                        if (!roomLastActivity["Genel Sohbet"]) {
-                            roomLastActivity["Genel Sohbet"] = Date.now();
-                        }
-                    }
-
-                    // LocalStorage'ı güncelle
-                    localStorage.setItem(MESSAGE_HISTORY_KEY, JSON.stringify(messageHistoryCache));
-                    localStorage.setItem(ROOMS_KEY, JSON.stringify(rooms));
-                    localStorage.setItem(BANS_KEY, JSON.stringify(bans));
-                    localStorage.setItem(ADMINS_KEY, JSON.stringify(admins));
-                    localStorage.setItem(ROOM_LAST_ACTIVITY_KEY, JSON.stringify(roomLastActivity));
-                    localStorage.setItem(BACKUP_KEY, JSON.stringify(getAllData()));
-
-                    showToast('✅ Yedek başarıyla yüklendi! Sayfa yenileniyor...');
-                    setTimeout(() => location.reload(), 1500);
-                } catch(err) {
-                    showToast('❌ Hata: Geçersiz dosya!');
-                    console.error(err);
-                }
-            };
-            reader.readAsText(file);
-            document.getElementById('restoreInput').value = '';
-        }
-
         function autoBackup() {
             try {
                 const data = getAllData();
                 localStorage.setItem(BACKUP_KEY, JSON.stringify(data));
-                
-                // Her 100 mesajda bir otomatik yedek indir (opsiyonel)
-                const totalMessages = Object.values(messageHistoryCache).reduce((acc, arr) => acc + arr.length, 0);
-                if (totalMessages > 0 && totalMessages % 100 === 0) {
-                    showToast('💾 100 mesaja ulaşıldı, otomatik yedek alınıyor...');
-                    exportAllData();
-                }
             } catch(e) {
                 console.error('Otomatik yedekleme hatası:', e);
             }
@@ -1494,19 +1416,45 @@
         }
 
         function saveMessageHistory(roomName, messages) {
-            try {
-                if (messages.length > MAX_HISTORY) {
-                    messages = messages.slice(-MAX_HISTORY);
-                }
-                messageHistoryCache[roomName] = messages;
-                const all = JSON.parse(localStorage.getItem(MESSAGE_HISTORY_KEY) || '{}');
-                all[roomName] = messages;
-                localStorage.setItem(MESSAGE_HISTORY_KEY, JSON.stringify(all));
-                updateRoomActivity(roomName);
-                autoBackup();
-            } catch (e) {
-                console.error("Storage hatası:", e);
+            if (messages.length > MAX_HISTORY) {
+                messages = messages.slice(-MAX_HISTORY);
             }
+            messageHistoryCache[roomName] = messages;
+            updateRoomActivity(roomName);
+
+            const trySave = (msgs) => {
+                const all = JSON.parse(localStorage.getItem(MESSAGE_HISTORY_KEY) || '{}');
+                all[roomName] = msgs;
+                localStorage.setItem(MESSAGE_HISTORY_KEY, JSON.stringify(all));
+            };
+
+            let toSave = messages;
+            let attempts = 0;
+            while (attempts < 15) {
+                try {
+                    trySave(toSave);
+                    messageHistoryCache[roomName] = toSave;
+                    autoBackup();
+                    return;
+                } catch (e) {
+                    attempts++;
+                    // Depolama alanı doluysa: önce en eski medya (resim/ses/dosya) içeriğini hafiflet
+                    const mediaIndex = toSave.findIndex(m => m.type === 'image' || m.type === 'audio' || m.type === 'file');
+                    if (mediaIndex !== -1) {
+                        toSave = toSave.slice();
+                        toSave[mediaIndex] = Object.assign({}, toSave[mediaIndex], { content: '', trimmed: true });
+                    } else if (toSave.length > 20) {
+                        // Medya kalmadıysa en eski mesajların bir kısmını at
+                        toSave = toSave.slice(Math.ceil(toSave.length * 0.2));
+                    } else {
+                        console.error("Storage hatası: yer yok, kaydedilemedi.", e);
+                        showToast("⚠️ Depolama alanı dolu, bazı eski mesajlar kaydedilemedi!");
+                        return;
+                    }
+                }
+            }
+            console.error("Storage hatası: kayıt denemeleri tükendi.");
+            showToast("⚠️ Depolama alanı dolu, bazı eski mesajlar kaydedilemedi!");
         }
 
         function addMessageToHistory(roomName, msgData) {
@@ -2847,9 +2795,7 @@
         console.log("🚀 Cengo Chat v4 - 24 SAAT SONRA ODA SİLİNİR!");
         console.log("🇹🇷 Milli gururumuz Cengo Chat!");
         console.log(`⏳ ${ROOM_EXPIRY_HOURS} saat boyunca aktif olmayan odalar otomatik silinir!`);
-        console.log("💾 Tüm veriler LocalStorage + Otomatik JSON Yedekleme ile korunuyor!");
-        console.log("📦 Yedekle butonu ile manuel yedek alabilirsin!");
-        console.log("📂 Yükle butonu ile yedekten geri yükleyebilirsin!");
+        console.log("💾 Tüm veriler LocalStorage ile korunuyor, otomatik arka plan yedeği alınıyor!");
     </script>
 
 </body>
