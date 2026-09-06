@@ -1661,20 +1661,6 @@
                 opacity: 0.5;
             }
         }
-
-        /* ===== KULLANICI ADI KONTROLÜ ===== */
-        .username-check {
-            color: #ef4444;
-            font-size: 12px;
-            display: none;
-            margin-top: 4px;
-        }
-        .username-check.available {
-            color: #10b981;
-        }
-        .username-check.show {
-            display: block;
-        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js">
     </script>
@@ -1717,7 +1703,7 @@
             <div class="modal-footer">
                 <button class="btn" onclick="closeEntryModalWithThx()">✅ TAMAM</button>
             </div>
-            <div class="small-note">cengO v4.7 • hoş geldiniz</div>
+            <div class="small-note">cengO v5.0 • güvenli sohbet</div>
         </div>
     </div>
 
@@ -1750,7 +1736,7 @@
                     </div>
                 </div>
             </div>
-            <div style="font-size:10px; color:#475569; writing-mode:vertical-lr; transform:rotate(180deg);">v4.7</div>
+            <div style="font-size:10px; color:#475569; writing-mode:vertical-lr; transform:rotate(180deg);">v5.0</div>
         </div>
 
         <div class="room-panel" id="roomPanel">
@@ -1765,6 +1751,7 @@
                     <div class="name" onclick="changeUsername()" id="sidebarUsername">Kullanıcı ✏️</div>
                     <div class="badge" id="onlineStatus">🟢 Çevrimiçi</div>
                     <div class="badge level-badge" id="levelBadge">⭐ Seviye 1</div>
+                    <div class="badge" style="font-size:8px;background:#334155;color:#94a3b8;" id="userIdDisplay">ID: xxx</div>
                 </div>
                 <input type="color" id="userColorPicker" onchange="updateUserColor(this.value)" style="width:28px; height:28px; border:none; border-radius:50%; cursor:pointer; background:none; padding:0;">
             </div>
@@ -1880,6 +1867,7 @@
             <div class="help-item"><span>🏆 Liderlik tablosu için <strong>🏆</strong> butonuna tıkla</span></div>
             <div class="help-item"><span>🎯 Günlük görevler için <strong>🎯</strong> butonuna tıkla</span></div>
             <div class="help-item"><span>🔊 <strong>#SesliSohbet</strong> odasında sadece sesli iletişim vardır, yazı mesajı gönderilemez</span></div>
+            <div class="help-item"><span>🛡️ <strong>Benzersiz Kullanıcı ID</strong> ile kimse başkasının mesajını silemez!</span></div>
         </div>
         <button class="btn close-help" onclick="toggleHelp()">Kapat</button>
     </div>
@@ -1988,32 +1976,62 @@
             }
         }
 
+        // ============================================================
+        // ===== BENZERSİZ KULLANICI ID SİSTEMİ =====
+        // ============================================================
+        
+        function generateUserId() {
+            return 'u_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function getUserId() {
+            let userId = localStorage.getItem("cengo_user_id");
+            if (!userId) {
+                userId = generateUserId();
+                localStorage.setItem("cengo_user_id", userId);
+            }
+            return userId;
+        }
+
+        // Kullanıcı ID'yi al
+        let USER_ID = getUserId();
+        console.log("🆔 Kullanıcı ID:", USER_ID);
+
+        // ID'yi profilde göster
+        document.addEventListener('DOMContentLoaded', function() {
+            const idDisplay = document.getElementById('userIdDisplay');
+            if (idDisplay) {
+                const shortId = USER_ID.substring(0, 8) + '…';
+                idDisplay.textContent = '🆔 ' + shortId;
+                idDisplay.title = USER_ID;
+            }
+        });
+
+        // ============================================================
         // ===== SABİTLER =====
-        const MESSAGE_HISTORY_KEY = "cengo_history_v4";
-        const ROOMS_KEY = "cengo_rooms_v4";
-        const BANS_KEY = "cengo_bans_v4";
-        const ADMINS_KEY = "cengo_admins_v4";
-        const ROOM_LAST_ACTIVITY_KEY = "cengo_room_activity_v4";
-        const BACKUP_KEY = "cengo_backup_data";
-        const STATS_KEY = "cengo_stats_v4";
-        const TASKS_KEY = "cengo_tasks_v4";
-        const USERS_KEY = "cengo_users_v4";
+        // ============================================================
+        
+        const MESSAGE_HISTORY_KEY = "cengo_history_v5";
+        const ROOMS_KEY = "cengo_rooms_v5";
+        const BANS_KEY = "cengo_bans_v5";
+        const ADMINS_KEY = "cengo_admins_v5";
+        const ROOM_LAST_ACTIVITY_KEY = "cengo_room_activity_v5";
+        const BACKUP_KEY = "cengo_backup_data_v5";
+        const STATS_KEY = "cengo_stats_v5";
+        const TASKS_KEY = "cengo_tasks_v5";
+        const USERS_KEY = "cengo_users_v5";
         const MAX_HISTORY = 500;
         const ROOM_EXPIRY_HOURS = 24;
 
-        // ===== KULLANICI ADI SİSTEMİ (YENİ - AYNI İSİM ALINABİLİR) =====
+        // ===== KULLANICI ADI SİSTEMİ =====
         let registeredUsers = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
 
-        // Kullanıcı adının kayıtlı olup olmadığını kontrol et (artık engellemiyoruz)
         function isUsernameTaken(name) {
             return registeredUsers.includes(name);
         }
 
-        // Kullanıcı adını kaydet (eğer varsa eskiyi silip yeniden ekle)
         function registerUsername(name) {
-            // Eğer varsa önce sil
             registeredUsers = registeredUsers.filter(u => u !== name);
-            // Sonra ekle
             registeredUsers.push(name);
             localStorage.setItem(USERS_KEY, JSON.stringify(registeredUsers));
             return true;
@@ -2024,32 +2042,26 @@
             localStorage.setItem(USERS_KEY, JSON.stringify(registeredUsers));
         }
 
-        // ===== KULLANICI ADI SEÇİMİ (YENİ) =====
+        // ===== KULLANICI ADI SEÇİMİ =====
         function selectUsername() {
             let name = localStorage.getItem("cengo_username") || "";
             
-            // Eğer name boşsa veya kayıtlı değilse yeni isim iste
             if (!name || !registeredUsers.includes(name)) {
-                // Eğer name kayıtlı değilse ama boş değilse, kaydet
                 if (name && !registeredUsers.includes(name)) {
                     registerUsername(name);
                     return name;
                 }
                 
-                // Yeni isim iste
-                let newName = prompt("Bir kullanıcı adı seçin (istediğiniz ismi alabilirsiniz):", name || "");
+                let newName = prompt("Bir kullanıcı adı seçin:", name || "");
                 while (!newName || !newName.trim()) {
                     newName = prompt("Lütfen geçerli bir kullanıcı adı girin:", "");
                 }
                 newName = newName.trim();
                 
-                // İsim kayıtlıysa uyar ama yine de kullanıcıya izin ver
                 if (isUsernameTaken(newName)) {
                     if (!confirm(`"${newName}" kullanıcı adı zaten kullanılıyor. Yine de bu ismi almak istiyor musunuz?`)) {
-                        // İstemiyorsa yeni isim iste
                         return selectUsername();
                     }
-                    // İstiyorsa eski kaydı silip yenisini ekle
                     unregisterUsername(newName);
                 }
                 
@@ -2274,6 +2286,7 @@
             const payload = {
                 type: 'gif',
                 msgId: msgId,
+                userId: USER_ID,  // <-- BENZERSİZ ID
                 gonderen: username,
                 pp: myProfileData,
                 color: userBubbleColor,
@@ -2322,6 +2335,7 @@
                     client.publish('cengo/voice/' + currentRoomName, JSON.stringify({
                         type: 'voice_join',
                         user: username,
+                        userId: USER_ID,
                         room: currentRoomName
                     }));
                     client.subscribe('cengo/voice/' + currentRoomName);
@@ -2349,6 +2363,7 @@
             client.publish('cengo/voice/' + currentRoomName, JSON.stringify({
                 type: 'voice_leave',
                 user: username,
+                userId: USER_ID,
                 room: currentRoomName
             }));
             client.unsubscribe('cengo/voice/' + currentRoomName);
@@ -2372,26 +2387,24 @@
             usersDiv.textContent = `👥 Katılımcı: ${count}${userList.length > 0 ? ' | ' + userList.join(', ') : ''}`;
         }
 
+        // ============================================================
         // ===== MQTT =====
+        // ============================================================
+        
         let client = null;
         let currentTopic = null;
         let currentRoomName = "Genel Sohbet";
         let username = localStorage.getItem("cengo_username") || "";
         let isVoiceRoom = false;
 
-        // Kullanıcı adı seçimi (YENİ - aynı isim alınabilir)
+        // Kullanıcı adı seçimi
         function setupUsername() {
-            // Eğer username boşsa veya kayıtlı değilse seçim yap
             if (!username || !registeredUsers.includes(username)) {
                 username = selectUsername();
-            } else {
-                // Kullanıcı adı zaten kayıtlı, devam
-                // Ama eğer kullanıcı adı değişmek isterse changeUsername ile değiştirebilir
             }
             return username;
         }
 
-        // Başlangıçta kullanıcı adını ayarla
         username = setupUsername();
 
         let userBubbleColor = localStorage.getItem("cengo_color") || "#3b82f6";
@@ -2407,6 +2420,16 @@
         document.getElementById("sidebarUsername").innerText = username;
         document.getElementById("userInfo").innerHTML = "👤 " + username + ' <span style="font-size:10px;cursor:pointer;" onclick="toggleSound()">' + (soundEnabled ?
             "🔊" : "🔇") + '</span>';
+
+        // ID'yi göster
+        setTimeout(() => {
+            const idDisplay = document.getElementById('userIdDisplay');
+            if (idDisplay) {
+                const shortId = USER_ID.substring(0, 8) + '…';
+                idDisplay.textContent = '🆔 ' + shortId;
+                idDisplay.title = USER_ID;
+            }
+        }, 100);
 
         let rooms = JSON.parse(localStorage.getItem(ROOMS_KEY)) || {
             "Genel Sohbet": { pass: "", owner: "Sistem" },
@@ -2457,7 +2480,7 @@
                 tasks: tasks,
                 users: registeredUsers,
                 timestamp: Date.now(),
-                version: "4.7"
+                version: "5.0"
             };
         }
 
@@ -2606,9 +2629,7 @@
         }
 
         function addMessageToHistory(roomName, msgData) {
-            // Sesli sohbet odasına mesaj kaydetme
             if (roomName === 'SesliSohbet') {
-                // Sadece sistem mesajlarını kaydet, kullanıcı mesajlarını kaydetme
                 if (msgData.isSystem) {
                     const history = getMessageHistory(roomName);
                     if (history.some(m => m.msgId === msgData.msgId)) return;
@@ -2853,14 +2874,12 @@
                 status.className = 'badge';
             }
 
-            // Sesli oda kontrolü
             const voiceTag = document.getElementById('voiceRoomTag');
             const voiceOnlyTag = document.getElementById('voiceOnlyTag');
             if (currentRoomName === 'SesliSohbet') {
                 voiceTag.style.display = 'inline';
                 voiceOnlyTag.style.display = 'inline';
                 isVoiceRoom = true;
-                // Chat input'u devre dışı bırak
                 document.getElementById('chatInputArea').classList.add('voice-only');
                 document.getElementById('voiceOnlyOverlay').style.display = 'flex';
                 document.getElementById('emojiBar').style.display = 'none';
@@ -2870,7 +2889,6 @@
                 document.getElementById('msgText').disabled = true;
                 document.getElementById('fileBtn').style.display = 'none';
                 document.getElementById('sendBtn').style.display = 'none';
-                // Sesli sohbet odasına otomatik katıl
                 if (!isInVoiceCall) {
                     setTimeout(() => {
                         joinVoiceCall();
@@ -2905,6 +2923,7 @@
             const payload = {
                 type: 'system',
                 msgId: msgId,
+                userId: 'system',
                 gonderen: '🛡️ Sistem',
                 pp: '',
                 content: text,
@@ -2981,7 +3000,7 @@
                 if (confirm(`"${currentRoomName}" odasındaki tüm mesajlar silinecek. Onaylıyor musun?`)) {
                     saveMessageHistory(currentRoomName, []);
                     renderMessages(currentRoomName);
-                    const payload = JSON.stringify({ type: 'clear_chat', by: username });
+                    const payload = JSON.stringify({ type: 'clear_chat', by: username, userId: USER_ID });
                     client.publish(currentTopic, payload);
                     sendSystemMessage(`🧹 ${username} sohbeti temizledi!`);
                 }
@@ -3071,6 +3090,7 @@
             client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
             client.on('connect', () => {
                 console.log("✅ MQTT bağlandı");
+                console.log("🆔 Kullanıcı ID:", USER_ID);
                 client.subscribe('cengo/room-list-sync');
                 client.publish('cengo/room-list-sync', JSON.stringify({ type: 'get_rooms' }));
                 renderRooms();
@@ -3079,7 +3099,7 @@
                     joinRoom("Genel Sohbet");
                 }, 500);
                 client.subscribe('cengo/online');
-                client.publish('cengo/online', JSON.stringify({ type: 'online', user: username, pp: myProfileData }));
+                client.publish('cengo/online', JSON.stringify({ type: 'online', user: username, userId: USER_ID, pp: myProfileData }));
                 client.subscribe('cengo/voice/+');
             });
             client.on('message', (top, message) => {
@@ -3181,23 +3201,29 @@
                     }
 
                     if (data.type === 'delete_msg' && data.msgId) {
-                        let history = getMessageHistory(currentRoomName);
-                        history = history.filter(m => m.msgId !== data.msgId);
-                        saveMessageHistory(currentRoomName, history);
-                        renderMessages(currentRoomName);
+                        // SİLME KONTROLÜ: Sadece mesajın sahibi silebilir
+                        const history = getMessageHistory(currentRoomName);
+                        const msg = history.find(m => m.msgId === data.msgId);
+                        if (msg && msg.userId === data.userId) {
+                            let newHistory = history.filter(m => m.msgId !== data.msgId);
+                            saveMessageHistory(currentRoomName, newHistory);
+                            renderMessages(currentRoomName);
+                        } else {
+                            console.warn('⛔ Silme yetkisi yok! Mesaj sahibi:', msg?.userId, 'Silen:', data.userId);
+                        }
                         return;
                     }
 
                     if (data.type === 'clear_chat') {
-                        saveMessageHistory(currentRoomName, []);
-                        renderMessages(currentRoomName);
-                        showToast("🧹 Sohbet temizlendi!");
+                        if (data.userId === USER_ID || isAdmin || isOwner) {
+                            saveMessageHistory(currentRoomName, []);
+                            renderMessages(currentRoomName);
+                            showToast("🧹 Sohbet temizlendi!");
+                        }
                         return;
                     }
 
-                    // Sesli sohbet odasında kullanıcı mesajlarını engelle
                     if (currentRoomName === 'SesliSohbet' && data.type !== 'system' && data.gonderen !== '🛡️ Sistem') {
-                        // Sadece sistem mesajlarını göster
                         return;
                     }
 
@@ -3250,6 +3276,7 @@
                 type: 'request_history',
                 room: roomName,
                 requester: username,
+                userId: USER_ID,
                 limit: 50
             });
             client.publish(currentTopic, payload);
@@ -3406,7 +3433,7 @@
             cancelReply();
             updateAdminStatus();
 
-            client.publish('cengo/online', JSON.stringify({ type: 'online', user: username, pp: myProfileData }));
+            client.publish('cengo/online', JSON.stringify({ type: 'online', user: username, userId: USER_ID, pp: myProfileData }));
 
             unreadCount = 0;
             updateTitleNotification();
@@ -3484,8 +3511,11 @@
             }
         }
 
+        // ============================================================
+        // ===== MESAJ GÖNDERME (ID EKLENDİ) =====
+        // ============================================================
+        
         function sendMessage() {
-            // Sesli sohbet odasında mesaj gönderilemez
             if (currentRoomName === 'SesliSohbet') {
                 showToast('⛔ Bu oda sadece sesli sohbet içindir!');
                 document.getElementById("msgText").value = "";
@@ -3518,6 +3548,7 @@
             let payload = {
                 type: 'text',
                 msgId: msgId,
+                userId: USER_ID,  // <-- BENZERSİZ ID
                 gonderen: username,
                 pp: myProfileData,
                 color: userBubbleColor,
@@ -3559,9 +3590,9 @@
                 return;
             }
             clearTimeout(typingTimeout);
-            client.publish(currentTopic + '/typing', JSON.stringify({ user: username, typing: true }));
+            client.publish(currentTopic + '/typing', JSON.stringify({ user: username, userId: USER_ID, typing: true }));
             typingTimeout = setTimeout(() => {
-                client.publish(currentTopic + '/typing', JSON.stringify({ user: username, typing: false }));
+                client.publish(currentTopic + '/typing', JSON.stringify({ user: username, userId: USER_ID, typing: false }));
             }, 1500);
         }
 
@@ -3612,6 +3643,7 @@
                 let payload = {
                     type: fileType,
                     msgId: msgId,
+                    userId: USER_ID,  // <-- BENZERSİZ ID
                     gonderen: username,
                     pp: myProfileData,
                     color: userBubbleColor,
@@ -3677,7 +3709,7 @@
                         const payload = {
                             type: 'audio',
                             msgId: msgId,
-                            gonderen: username,
+                            userId: USER_ID,  // <-- BENZERSİZ ID                            gonderen: username,
                             pp: myProfileData,
                             color: userBubbleColor,
                             content: e.target.result,
@@ -3726,6 +3758,10 @@
             }
         }
 
+        // ============================================================
+        // ===== MESAJ SİLME (ID KONTROLLÜ) =====
+        // ============================================================
+        
         function deleteMessage(msgId) {
             if (!currentTopic || !currentRoomName || currentRoomName === 'SesliSohbet') return;
             const history = getMessageHistory(currentRoomName);
@@ -3734,15 +3770,24 @@
                 showToast('⚠️ Mesaj bulunamadı!');
                 return;
             }
-            if (msg.gonderen !== username && !isAdmin && !isOwner) {
-                showToast('⛔ Bu mesajı silemezsin!');
+            
+            // 🔒 GÜVENLİK KONTROLÜ: Sadece mesajın sahibi silebilir
+            if (msg.userId !== USER_ID && !isAdmin && !isOwner) {
+                showToast('⛔ Bu mesajı silemezsin! (Sadece sahibi silebilir)');
                 return;
             }
-            const payload = JSON.stringify({ type: 'delete_msg', msgId: msgId, gonderen: username });
+            
+            const payload = JSON.stringify({ 
+                type: 'delete_msg', 
+                msgId: msgId, 
+                gonderen: username,
+                userId: USER_ID  // <-- KİMİN SİLDİĞİNİ KONTROL ET
+            });
             client.publish(currentTopic, payload);
             const newHistory = history.filter(m => m.msgId !== msgId);
             saveMessageHistory(currentRoomName, newHistory);
             renderMessages(currentRoomName);
+            showToast('🗑️ Mesaj silindi!');
         }
 
         function copyMessage(text) {
@@ -3798,7 +3843,6 @@
                 return;
             }
 
-            // Sesli sohbet odasında kullanıcı mesajlarını gösterme
             if (currentRoomName === 'SesliSohbet') {
                 return;
             }
@@ -3870,6 +3914,12 @@
             else if (data.isAdmin) tags += '<span class="admin-tag">🛡️ Admin</span> ';
             if (data.level) tags += `<span class="level-tag">${data.levelBadge || '⭐'} Lv.${data.level}</span> `;
 
+            // Gönderenin yanına küçük ID bilgisi ekle (debug için)
+            if (data.userId && data.userId !== 'system') {
+                const shortId = data.userId.substring(0, 6) + '…';
+                tags += `<span style="font-size:7px;opacity:0.4;background:var(--bg-card);padding:0 4px;border-radius:4px;">🔑${shortId}</span> `;
+            }
+
             footer.innerHTML = `
                 <span>~ ${data.gonderen}</span>
                 ${tags}
@@ -3915,7 +3965,9 @@
                 actions.appendChild(replyBtn);
             }
 
-            if ((isMe || isAdmin || isOwner) && data.msgId && data.gonderen !== '🛡️ Sistem') {
+            // 🔒 SİLME BUTONU - Sadece mesajın sahibi veya admin silebilir
+            const canDelete = (isMe || isAdmin || isOwner) && data.msgId && data.gonderen !== '🛡️ Sistem';
+            if (canDelete) {
                 const delBtn = document.createElement("button");
                 delBtn.className = "del-btn";
                 delBtn.innerHTML = "✕";
@@ -3961,24 +4013,20 @@
         }
 
         function changeUsername() {
-            const newName = prompt("Yeni ad (istediğin ismi alabilirsin, kullanılıyorsa uyarı verir):", username);
+            const newName = prompt("Yeni ad (istediğin ismi alabilirsin):", username);
             if (newName && newName.trim()) {
                 const trimmed = newName.trim();
                 if (trimmed === username) {
                     showToast('⚠️ Zaten bu ismi kullanıyorsun!');
                     return;
                 }
-                // İsim kayıtlıysa uyar
                 if (isUsernameTaken(trimmed)) {
                     if (!confirm(`"${trimmed}" kullanıcı adı zaten kullanılıyor. Yine de bu ismi almak istiyor musunuz?`)) {
                         return;
                     }
-                    // Eski kaydı sil
                     unregisterUsername(trimmed);
                 }
-                // Eski kullanıcı adını kaldır
                 unregisterUsername(username);
-                // Yeni kullanıcı adını kaydet
                 registerUsername(trimmed);
                 username = trimmed;
                 localStorage.setItem("cengo_username", username);
@@ -3986,7 +4034,7 @@
                 document.getElementById("userInfo").innerHTML = "👤 " + username +
                     ' <span style="font-size:10px;cursor:pointer;" onclick="toggleSound()">' + (soundEnabled ? "🔊" :
                         "🔇") + '</span>';
-                client.publish('cengo/online', JSON.stringify({ type: 'online', user: username, pp: myProfileData }));
+                client.publish('cengo/online', JSON.stringify({ type: 'online', user: username, userId: USER_ID, pp: myProfileData }));
                 updateAdminStatus();
                 showToast(`✅ Kullanıcı adı "${username}" olarak değiştirildi!`);
             }
@@ -4015,7 +4063,7 @@
                     myProfileData = canvas.toDataURL('image/jpeg', 0.7);
                     document.getElementById("myProfilePic").src = myProfileData;
                     localStorage.setItem("cengo_profile", myProfileData);
-                    client.publish('cengo/online', JSON.stringify({ type: 'online', user: username, pp: myProfileData }));
+                    client.publish('cengo/online', JSON.stringify({ type: 'online', user: username, userId: USER_ID, pp: myProfileData }));
                 };
                 img.src = e.target.result;
             };
@@ -4061,13 +4109,18 @@
 
         window.addEventListener('beforeunload', function() {
             autoBackup();
-            client.publish('cengo/online', JSON.stringify({ type: 'offline', user: username }));
+            if (client) {
+                client.publish('cengo/online', JSON.stringify({ type: 'offline', user: username, userId: USER_ID }));
+            }
             if (isInVoiceCall) {
                 leaveVoiceCall();
             }
         });
 
+        // ============================================================
         // ===== BAŞLAT =====
+        // ============================================================
+        
         loadBackup();
 
         const savedRooms2 = localStorage.getItem(ROOMS_KEY);
@@ -4121,16 +4174,20 @@
         const s = getStats(username);
         document.getElementById('levelBadge').textContent = `${getLevelBadge(s.level)} Seviye ${s.level}`;
 
-        console.log("🚀 Cengo Chat v4.7 - YENİ KULLANICI ADI SİSTEMİ!");
-        console.log("👤 Artık kullanılan isimleri de alabilirsiniz!");
-        console.log("⚠️ Eğer isim kullanılıyorsa uyarı verir ve onayınızı ister.");
-        console.log("📊 İstatistikler, Seviye, Görevler, Liderlik Tablosu");
+        console.log("==========================================");
+        console.log("🚀 Cengo Chat v5.0 - GÜVENLİ SÜRÜM!");
+        console.log("🆔 Benzersiz Kullanıcı ID: " + USER_ID);
+        console.log("👤 Kullanıcı Adı: " + username);
+        console.log("==========================================");
+        console.log("✅ Artık kimse başkasının mesajını silemez!");
+        console.log("✅ Her mesaj sahibine ait ID ile korunuyor!");
+        console.log("✅ İsim değişsen bile ID'n aynı kalır!");
+        console.log("==========================================");
+        console.log("📊 İstatistikler, Seviye, Görevler, Liderlik");
         console.log("🎬 GIF desteği (Giphy entegrasyonu)");
-        console.log("🎤 Sesli sohbet (#SesliSohbet odası - SADECE SESLİ!)");
-        console.log("🔔 Başlıkta bildirim sayacı");
-        console.log("💾 Tüm veriler LocalStorage ile korunuyor, otomatik arka plan yedeği alınıyor!");
-        console.log("");
-        console.log("⭐burak_msz⭐ ismini tekrar alabilirsin! 👍");
+        console.log("🎤 Sesli sohbet (#SesliSohbet - SADECE SESLİ!)");
+        console.log("💾 Tüm veriler LocalStorage ile korunuyor!");
+        console.log("==========================================");
     </script>
 </body>
 </html>
