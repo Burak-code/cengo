@@ -1717,7 +1717,7 @@
             <div class="modal-footer">
                 <button class="btn" onclick="closeEntryModalWithThx()">✅ TAMAM</button>
             </div>
-            <div class="small-note">cengO v4.6 • hoş geldiniz</div>
+            <div class="small-note">cengO v4.7 • hoş geldiniz</div>
         </div>
     </div>
 
@@ -1750,7 +1750,7 @@
                     </div>
                 </div>
             </div>
-            <div style="font-size:10px; color:#475569; writing-mode:vertical-lr; transform:rotate(180deg);">v4.6</div>
+            <div style="font-size:10px; color:#475569; writing-mode:vertical-lr; transform:rotate(180deg);">v4.7</div>
         </div>
 
         <div class="room-panel" id="roomPanel">
@@ -2001,25 +2001,63 @@
         const MAX_HISTORY = 500;
         const ROOM_EXPIRY_HOURS = 24;
 
-        // ===== KULLANICI ADI SİSTEMİ =====
+        // ===== KULLANICI ADI SİSTEMİ (YENİ - AYNI İSİM ALINABİLİR) =====
         let registeredUsers = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
 
+        // Kullanıcı adının kayıtlı olup olmadığını kontrol et (artık engellemiyoruz)
         function isUsernameTaken(name) {
             return registeredUsers.includes(name);
         }
 
+        // Kullanıcı adını kaydet (eğer varsa eskiyi silip yeniden ekle)
         function registerUsername(name) {
-            if (!isUsernameTaken(name)) {
-                registeredUsers.push(name);
-                localStorage.setItem(USERS_KEY, JSON.stringify(registeredUsers));
-                return true;
-            }
-            return false;
+            // Eğer varsa önce sil
+            registeredUsers = registeredUsers.filter(u => u !== name);
+            // Sonra ekle
+            registeredUsers.push(name);
+            localStorage.setItem(USERS_KEY, JSON.stringify(registeredUsers));
+            return true;
         }
 
         function unregisterUsername(name) {
             registeredUsers = registeredUsers.filter(u => u !== name);
             localStorage.setItem(USERS_KEY, JSON.stringify(registeredUsers));
+        }
+
+        // ===== KULLANICI ADI SEÇİMİ (YENİ) =====
+        function selectUsername() {
+            let name = localStorage.getItem("cengo_username") || "";
+            
+            // Eğer name boşsa veya kayıtlı değilse yeni isim iste
+            if (!name || !registeredUsers.includes(name)) {
+                // Eğer name kayıtlı değilse ama boş değilse, kaydet
+                if (name && !registeredUsers.includes(name)) {
+                    registerUsername(name);
+                    return name;
+                }
+                
+                // Yeni isim iste
+                let newName = prompt("Bir kullanıcı adı seçin (istediğiniz ismi alabilirsiniz):", name || "");
+                while (!newName || !newName.trim()) {
+                    newName = prompt("Lütfen geçerli bir kullanıcı adı girin:", "");
+                }
+                newName = newName.trim();
+                
+                // İsim kayıtlıysa uyar ama yine de kullanıcıya izin ver
+                if (isUsernameTaken(newName)) {
+                    if (!confirm(`"${newName}" kullanıcı adı zaten kullanılıyor. Yine de bu ismi almak istiyor musunuz?`)) {
+                        // İstemiyorsa yeni isim iste
+                        return selectUsername();
+                    }
+                    // İstiyorsa eski kaydı silip yenisini ekle
+                    unregisterUsername(newName);
+                }
+                
+                registerUsername(newName);
+                localStorage.setItem("cengo_username", newName);
+                return newName;
+            }
+            return name;
         }
 
         // ===== İSTATİSTİK VE SEVİYE SİSTEMİ =====
@@ -2341,44 +2379,20 @@
         let username = localStorage.getItem("cengo_username") || "";
         let isVoiceRoom = false;
 
-        // Kullanıcı adı kontrolü ve ayarı
+        // Kullanıcı adı seçimi (YENİ - aynı isim alınabilir)
         function setupUsername() {
-            if (username && isUsernameTaken(username)) {
-                // Eğer kullanıcı adı alınmışsa ve bu kullanıcı aktif değilse yeni isim iste
-                const confirmMsg = confirm(`"${username}" kullanıcı adı zaten alınmış. Yeni bir isim girmek ister misiniz?`);
-                if (confirmMsg) {
-                    username = "";
-                    localStorage.removeItem("cengo_username");
-                }
-            }
-            while (!username || isUsernameTaken(username)) {
-                const newName = prompt("Bir kullanıcı adı seçin:", username || "");
-                if (newName && newName.trim()) {
-                    const trimmed = newName.trim();
-                    if (!isUsernameTaken(trimmed)) {
-                        username = trimmed;
-                        registerUsername(username);
-                        localStorage.setItem("cengo_username", username);
-                        break;
-                    } else {
-                        alert(`"${trimmed}" kullanıcı adı zaten alınmış. Lütfen başka bir isim seçin.`);
-                    }
-                } else {
-                    // Rastgele isim oluştur
-                    const randomName = "Kullanıcı_" + Math.floor(Math.random() * 9999);
-                    if (!isUsernameTaken(randomName)) {
-                        username = randomName;
-                        registerUsername(username);
-                        localStorage.setItem("cengo_username", username);
-                        break;
-                    }
-                }
+            // Eğer username boşsa veya kayıtlı değilse seçim yap
+            if (!username || !registeredUsers.includes(username)) {
+                username = selectUsername();
+            } else {
+                // Kullanıcı adı zaten kayıtlı, devam
+                // Ama eğer kullanıcı adı değişmek isterse changeUsername ile değiştirebilir
             }
             return username;
         }
 
         // Başlangıçta kullanıcı adını ayarla
-        setupUsername();
+        username = setupUsername();
 
         let userBubbleColor = localStorage.getItem("cengo_color") || "#3b82f6";
         document.getElementById("userColorPicker").value = userBubbleColor;
@@ -2443,7 +2457,7 @@
                 tasks: tasks,
                 users: registeredUsers,
                 timestamp: Date.now(),
-                version: "4.0"
+                version: "4.7"
             };
         }
 
@@ -3947,16 +3961,20 @@
         }
 
         function changeUsername() {
-            const newName = prompt("Yeni ad:", username);
+            const newName = prompt("Yeni ad (istediğin ismi alabilirsin, kullanılıyorsa uyarı verir):", username);
             if (newName && newName.trim()) {
                 const trimmed = newName.trim();
                 if (trimmed === username) {
                     showToast('⚠️ Zaten bu ismi kullanıyorsun!');
                     return;
                 }
+                // İsim kayıtlıysa uyar
                 if (isUsernameTaken(trimmed)) {
-                    alert(`"${trimmed}" kullanıcı adı zaten alınmış!`);
-                    return;
+                    if (!confirm(`"${trimmed}" kullanıcı adı zaten kullanılıyor. Yine de bu ismi almak istiyor musunuz?`)) {
+                        return;
+                    }
+                    // Eski kaydı sil
+                    unregisterUsername(trimmed);
                 }
                 // Eski kullanıcı adını kaldır
                 unregisterUsername(username);
@@ -4103,14 +4121,16 @@
         const s = getStats(username);
         document.getElementById('levelBadge').textContent = `${getLevelBadge(s.level)} Seviye ${s.level}`;
 
-        console.log("🚀 Cengo Chat v4.6 - TÜM ÖZELLİKLER EKLENDİ!");
-        console.log("🇹🇷 Milli gururumuz Cengo Chat!");
+        console.log("🚀 Cengo Chat v4.7 - YENİ KULLANICI ADI SİSTEMİ!");
+        console.log("👤 Artık kullanılan isimleri de alabilirsiniz!");
+        console.log("⚠️ Eğer isim kullanılıyorsa uyarı verir ve onayınızı ister.");
         console.log("📊 İstatistikler, Seviye, Görevler, Liderlik Tablosu");
         console.log("🎬 GIF desteği (Giphy entegrasyonu)");
         console.log("🎤 Sesli sohbet (#SesliSohbet odası - SADECE SESLİ!)");
         console.log("🔔 Başlıkta bildirim sayacı");
-        console.log("👤 Benzersiz kullanıcı adı sistemi - alınmış isimler kullanılamaz");
         console.log("💾 Tüm veriler LocalStorage ile korunuyor, otomatik arka plan yedeği alınıyor!");
+        console.log("");
+        console.log("⭐burak_msz⭐ ismini tekrar alabilirsin! 👍");
     </script>
 </body>
 </html>
