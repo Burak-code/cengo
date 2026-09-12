@@ -758,7 +758,7 @@
     <div class="entry-modal" id="entryModal">
         <div class="entry-modal-card">
             <button class="close-btn" onclick="closeEntryModalDirect()">✕</button>
-            <div class="modal-title">🚀 cengO Chat v5.1</div>
+            <div class="modal-title">🚀 cengO Chat v5.2</div>
             <div class="modal-sub"><strong>@burak_msz</strong> tarafından yapılmıştır.<br>Sol taraftan web sitesine ve Instagram'a ulaşabilirsiniz.</div>
             <div class="modal-sub" style="color: var(--owner-color);">
                 ⚠️ Cengo henüz hatalarla dolu. Lütfen geliştirmemiz için Instagram hesabına geri bildirim yapınız.<br>
@@ -784,7 +784,7 @@
             <div class="modal-footer">
                 <button class="btn" onclick="closeEntryModalWithThx()">✅ TAMAM</button>
             </div>
-            <div class="small-note">cengO v5.1 • güvenli sohbet</div>
+            <div class="small-note">cengO v5.2 • güvenli sohbet</div>
         </div>
     </div>
 
@@ -818,7 +818,7 @@
                     </div>
                 </div>
             </div>
-            <div style="font-size:10px; color:#475569; writing-mode:vertical-lr; transform:rotate(180deg);">v5.1</div>
+            <div style="font-size:10px; color:#475569; writing-mode:vertical-lr; transform:rotate(180deg);">v5.2</div>
         </div>
 
         <div class="room-panel" id="roomPanel">
@@ -1177,7 +1177,7 @@
 
         function migrateFromLocalStorage() {
             try {
-                const history = localStorage.getItem(MESSAGE_HISTORY_KEY);
+                const history = localStorage.getItem("cengo_msg_history");
                 if (history) {
                     const parsed = JSON.parse(history);
                     for (let room in parsed) {
@@ -1186,20 +1186,20 @@
                         for (let msg of parsed[room] || []) { if (!existing.has(msg.msgId)) userData.messageHistory[room].push(msg); }
                     }
                 }
-                const rooms = localStorage.getItem(ROOMS_KEY);
+                const rooms = localStorage.getItem("cengo_rooms");
                 if (rooms) {
                     const parsed = JSON.parse(rooms);
                     for (let room in parsed) { if (!userData.rooms[room]) userData.rooms[room] = typeof parsed[room] === 'string' ? { pass: parsed[room], owner: "Sistem" } : parsed[room]; }
                 }
-                const bans = localStorage.getItem(BANS_KEY);
+                const bans = localStorage.getItem("cengo_bans");
                 if (bans) { const parsed = JSON.parse(bans); for (let key in parsed) { if (!userData.bans[key]) userData.bans[key] = parsed[key]; } }
-                const admins = localStorage.getItem(ADMINS_KEY);
+                const admins = localStorage.getItem("cengo_admins");
                 if (admins) { const parsed = JSON.parse(admins); for (let key in parsed) { if (!userData.admins[key]) userData.admins[key] = parsed[key]; } }
-                const stats = localStorage.getItem(STATS_KEY);
+                const stats = localStorage.getItem("cengo_stats");
                 if (stats) { const parsed = JSON.parse(stats); for (let id in parsed) { if (!userData.stats[id]) userData.stats[id] = parsed[id]; } }
-                const tasks = localStorage.getItem(TASKS_KEY);
+                const tasks = localStorage.getItem("cengo_tasks");
                 if (tasks) { const parsed = JSON.parse(tasks); for (let id in parsed) { if (!userData.tasks[id]) userData.tasks[id] = parsed[id]; } }
-                const users = localStorage.getItem(USERS_KEY);
+                const users = localStorage.getItem("cengo_users");
                 if (users) { const parsed = JSON.parse(users); userData.registeredUsers = [...new Set([...userData.registeredUsers, ...parsed])]; }
                 const uname = localStorage.getItem("cengo_username"); if (uname) userData.username = uname;
                 const pp = localStorage.getItem("cengo_profile"); if (pp) userData.profilePic = pp;
@@ -1217,7 +1217,7 @@
         }
 
         // ============================================================
-        // ===== STATS / SEVİYE (KALICI - FIX) =====
+        // ===== STATS / SEVİYE =====
         function getStats(userId) {
             if (!userData.stats[userId]) {
                 userData.stats[userId] = { messages: 0, xp: 0, level: 1, bans: 0, lastDaily: 0 };
@@ -1312,7 +1312,7 @@
         function toggleTasks() { const panel = document.getElementById('taskPanel'); panel.classList.toggle('show'); if (panel.classList.contains('show')) renderTasks(USER_ID); }
 
         // ============================================================
-        // ===== LİDERLİK (FIX) =====
+        // ===== LİDERLİK =====
         function toggleLeaderboard() {
             const panel = document.getElementById('leaderboardPanel');
             panel.classList.toggle('show');
@@ -1321,7 +1321,6 @@
 
         function renderLeaderboard() {
             const list = document.getElementById('leaderboardList');
-            // Aynı userId'yi birleştir, messages'a göre sırala
             const sorted = Object.entries(userData.stats)
                 .filter(([id]) => id && id !== 'undefined' && id !== '')
                 .sort((a, b) => b[1].messages - a[1].messages)
@@ -1337,7 +1336,6 @@
                 const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index+1}`;
                 const levelBadge = getLevelBadge(data.level);
                 let displayName = 'Kullanıcı';
-                // Kullanıcının en son mesajındaki ismi bul
                 for (let room in userData.messageHistory) {
                     const msgs = userData.messageHistory[room] || [];
                     for (let msg of msgs) {
@@ -1417,8 +1415,8 @@
         }
 
         function joinVoiceCall() {
-            if (isInVoiceCall) return;
-            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+            if (isInVoiceCall) return Promise.resolve();
+            return navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
                 voiceStream = stream;
                 isInVoiceCall = true;
                 document.getElementById('voiceJoinBtn').style.display = 'none';
@@ -1531,1275 +1529,568 @@
             const toast = document.getElementById('toast');
             toast.textContent = text;
             toast.classList.add('show');
-            clearTimeout(toast._timeout);
-            toast._timeout = setTimeout(() => { toast.classList.remove('show'); }, duration);
+            setTimeout(() => { toast.classList.remove('show'); }, duration);
         }
 
-        // ============================================================
-        // ===== ROOM FUNCTIONS =====
-        function updateRoomActivity(roomName) { userData.roomLastActivity[roomName] = Date.now(); saveAllData(); }
-        function getRoomActivity(roomName) { return userData.roomLastActivity[roomName] || 0; }
-        function isRoomExpired(roomName) {
-            if (roomName === "Genel Sohbet" || roomName === "SesliSohbet") return false;
-            const lastActivity = getRoomActivity(roomName);
-            if (lastActivity === 0) return true;
-            const hoursSince = (Date.now() - lastActivity) / (1000 * 60 * 60);
-            return hoursSince >= ROOM_EXPIRY_HOURS;
-        }
-        function checkAndDeleteExpiredRooms() {
-            let deleted = false;
-            for (let roomName in userData.rooms) {
-                if (roomName === "Genel Sohbet" || roomName === "SesliSohbet") continue;
-                if (isRoomExpired(roomName)) {
-                    delete userData.rooms[roomName];
-                    delete userData.messageHistory[roomName];
-                    delete userData.roomLastActivity[roomName];
-                    deleted = true;
-                }
-            }
-            if (deleted) { saveAllData(); renderRooms(); if (currentRoomName && !userData.rooms[currentRoomName] && currentRoomName !== "Genel Sohbet" && currentRoomName !== "SesliSohbet") { joinRoom("Genel Sohbet"); } }
-        }
-        function getMessageHistory(roomName) { if (!userData.messageHistory[roomName]) userData.messageHistory[roomName] = []; return userData.messageHistory[roomName]; }
-        function saveMessageHistory(roomName, messages) {
-            if (messages.length > MAX_HISTORY) messages = messages.slice(-MAX_HISTORY);
-            userData.messageHistory[roomName] = messages;
-            updateRoomActivity(roomName);
-            saveAllData();
-        }
-        function addMessageToHistory(roomName, msgData) {
-            if (roomName === 'SesliSohbet') {
-                if (msgData.isSystem) {
-                    const history = getMessageHistory(roomName);
-                    if (history.some(m => m.msgId === msgData.msgId)) return;
-                    history.push(msgData);
-                    history.sort((a, b) => (a.msgId || '').localeCompare(b.msgId || ''));
-                    saveMessageHistory(roomName, history);
-                }
-                return;
-            }
-            const history = getMessageHistory(roomName);
-            if (history.some(m => m.msgId === msgData.msgId)) return;
-            history.push(msgData);
-            history.sort((a, b) => (a.msgId || '').localeCompare(b.msgId || ''));
-            saveMessageHistory(roomName, history);
-        }
-
-        // ============================================================
-        // ===== THEME / SOUND =====
         function toggleTheme() {
             const current = document.documentElement.getAttribute('data-theme');
-            const newTheme = current === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', newTheme);
-            userData.theme = newTheme;
+            const next = current === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            userData.theme = next;
             saveAllData();
         }
+
+        function toggleSidebar() {
+            document.getElementById('roomPanel').classList.toggle('open');
+        }
+
+        function toggleHelp() {
+            document.getElementById('helpPanel').classList.toggle('show');
+        }
+
+        function togglePalette() {
+            const popup = document.getElementById('palettePopup');
+            popup.style.display = popup.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        function setBgColor(color) {
+            document.documentElement.style.setProperty('--bg-primary', color);
+            togglePalette();
+        }
+
         function toggleSound() {
             soundEnabled = !soundEnabled;
-            localStorage.setItem('cengo_sound', soundEnabled);
-            document.getElementById("userInfo").innerHTML = "👤 " + username + ' <span style="font-size:10px;cursor:pointer;" onclick="toggleSound()">' + (soundEnabled ? "🔊" : "🔇") + '</span>';
-            showToast(soundEnabled ? "🔊 Ses açıldı" : "🔇 Ses kapatıldı");
+            localStorage.setItem("cengo_sound", soundEnabled);
+            initializeUserData();
         }
-        function playNotificationSound() {
-            if (!soundEnabled) return;
-            try {
-                const ctx = new(window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator(); const gain = ctx.createGain();
-                osc.connect(gain); gain.connect(ctx.destination);
-                osc.frequency.value = 880; osc.type = 'sine'; gain.gain.value = 0.3;
-                osc.start(); setTimeout(() => { osc.stop(); }, 200);
-                setTimeout(() => { const osc2 = ctx.createOscillator(); const gain2 = ctx.createGain();
-                    osc2.connect(gain2); gain2.connect(ctx.destination);
-                    osc2.frequency.value = 1100; osc2.type = 'sine'; gain2.gain.value = 0.2;
-                    osc2.start(); setTimeout(() => { osc2.stop(); }, 150); }, 180);
-            } catch (e) {}
-        }
-        function playMentionSound() {
-            if (!soundEnabled) return;
-            try {
-                const ctx = new(window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator(); const gain = ctx.createGain();
-                osc.connect(gain); gain.connect(ctx.destination);
-                osc.frequency.value = 1200; osc.type = 'sine'; gain.gain.value = 0.25;
-                osc.start(); setTimeout(() => { osc.stop(); }, 100);
-                setTimeout(() => { const osc2 = ctx.createOscillator(); const gain2 = ctx.createGain();
-                    osc2.connect(gain2); gain2.connect(ctx.destination);
-                    osc2.frequency.value = 1500; osc2.type = 'sine'; gain2.gain.value = 0.2;
-                    osc2.start(); setTimeout(() => { osc2.stop(); }, 80); }, 120);
-            } catch (e) {}
-        }
-        function playAdminAnnouncementSound() {
-            if (!soundEnabled) return;
-            try {
-                const ctx = new(window.AudioContext || window.webkitAudioContext)();
-                const osc1 = ctx.createOscillator(); const gain1 = ctx.createGain();
-                osc1.connect(gain1); gain1.connect(ctx.destination);
-                osc1.frequency.value = 880; osc1.type = 'square'; gain1.gain.value = 0.25;
-                osc1.start(); setTimeout(() => { osc1.stop(); }, 150);
-                setTimeout(() => { const osc2 = ctx.createOscillator(); const gain2 = ctx.createGain();
-                    osc2.connect(gain2); gain2.connect(ctx.destination);
-                    osc2.frequency.value = 660; osc2.type = 'square'; gain2.gain.value = 0.2;
-                    osc2.start(); setTimeout(() => { osc2.stop(); }, 150); }, 180);
-                setTimeout(() => { const osc3 = ctx.createOscillator(); const gain3 = ctx.createGain();
-                    osc3.connect(gain3); gain3.connect(ctx.destination);
-                    osc3.frequency.value = 1100; osc3.type = 'sine'; gain3.gain.value = 0.3;
-                    osc3.start(); setTimeout(() => { osc3.stop(); }, 200); }, 360);
-            } catch (e) {}
-        }
-        function addEmoji(emoji) {
-            if (currentRoomName === 'SesliSohbet') { showToast('⛔ Sesli sohbet odasında emoji kullanamazsın!'); return; }
-            const input = document.getElementById("msgText");
-            input.value += emoji;
-            input.focus();
-        }
-
-        // ============================================================
-        // ===== BAN / ADMIN =====
-        function isUserBanned(user, roomName) {
-            const key = roomName + '|' + user;
-            if (userData.bans[key]) { if (Date.now() < userData.bans[key]) return true;
-                delete userData.bans[key]; saveAllData(); return false; }
-            return false;
-        }
-        function getBanRemaining(user, roomName) {
-            const key = roomName + '|' + user;
-            if (userData.bans[key]) { const remaining = Math.ceil((userData.bans[key] - Date.now()) / 60000); return remaining > 0 ? remaining : 0; }
-            return 0;
-        }
-        function banUser(user, roomName, durationMs = 3600000) {
-            const key = roomName + '|' + user;
-            userData.bans[key] = Date.now() + durationMs;
-            saveAllData();
-            updateStats(USER_ID, 'ban');
-            renderBanList(roomName);
-        }
-        function unbanUser(user, roomName) {
-            const key = roomName + '|' + user;
-            delete userData.bans[key];
-            saveAllData();
-            renderBanList(roomName);
-        }
-        function renderBanList(roomName) {
-            const list = document.getElementById('banList');
-            list.innerHTML = '';
-            let found = false;
-            for (let key in userData.bans) {
-                if (key.startsWith(roomName + '|')) {
-                    found = true;
-                    const user = key.split('|')[1];
-                    const remaining = getBanRemaining(user, roomName);
-                    if (remaining === 0) { delete userData.bans[key]; saveAllData(); continue; }
-                    const div = document.createElement('div');
-                    div.className = 'ban-item';
-                    div.innerHTML = `<span>${user} (${remaining} dk)</span><button class="unban-btn" onclick="unbanUser('${user}','${roomName}')">✕</button>`;
-                    list.appendChild(div);
-                }
-            }
-            if (!found) list.innerHTML = '<div style="color:var(--text-secondary);font-size:12px;">Yasaklı kullanıcı yok</div>';
-        }
-        function toggleBanPanel() { const panel = document.getElementById('banPanel'); panel.classList.toggle('show'); if (panel.classList.contains('show')) renderBanList(currentRoomName); }
-        function isAdminUser(user, roomName) { const key = roomName + '|' + user; return userData.admins[key] === true; }
-        function setAdmin(user, roomName) { const key = roomName + '|' + user; userData.admins[key] = true; saveAllData(); sendSystemMessage(`👑 ${user} admin yetkisi aldı!`); }
-        function removeAdmin(user, roomName) { const key = roomName + '|' + user; delete userData.admins[key]; saveAllData(); }
-
-        function updateAdminStatus() {
-            const roomData = userData.rooms[currentRoomName];
-            isOwner = roomData && roomData.owner === username;
-            isAdmin = isAdminUser(username, currentRoomName) || isOwner;
-            const tag = document.getElementById('adminTag');
-            const s = getStats(USER_ID);
-            document.getElementById('levelBadge').textContent = `${getLevelBadge(s.level)} Seviye ${s.level}`;
-            updateXpBar(USER_ID);
-            if (isOwner) { tag.style.display = 'inline'; tag.textContent = '👑 Sahip'; tag.style.background = 'var(--owner-color)'; tag.style.color = '#fff'; }
-            else if (isAdmin) { tag.style.display = 'inline'; tag.textContent = '🛡️ Admin'; tag.style.background = 'var(--admin-color)'; tag.style.color = '#000'; }
-            else { tag.style.display = 'none'; }
-            const voiceTag = document.getElementById('voiceRoomTag');
-            const voiceOnlyTag = document.getElementById('voiceOnlyTag');
-            if (currentRoomName === 'SesliSohbet') {
-                voiceTag.style.display = 'inline';
-                voiceOnlyTag.style.display = 'inline';
-                isVoiceRoom = true;
-                document.getElementById('chatInputArea').classList.add('voice-only');
-                document.getElementById('voiceOnlyOverlay').style.display = 'flex';
-                document.getElementById('emojiBar').style.display = 'none';
-                document.getElementById('inputRow').style.opacity = '0.3';
-                document.getElementById('inputRow').style.pointerEvents = 'none';
-                document.getElementById('msgText').placeholder = '🔊 Bu oda sadece sesli sohbet içindir';
-                document.getElementById('msgText').disabled = true;
-                document.getElementById('fileBtn').style.display = 'none';
-                document.getElementById('sendBtn').style.display = 'none';
-                updateVoiceMicBtn();
-            } else {
-                voiceTag.style.display = 'none';
-                voiceOnlyTag.style.display = 'none';
-                isVoiceRoom = false;
-                document.getElementById('chatInputArea').classList.remove('voice-only');
-                document.getElementById('voiceOnlyOverlay').style.display = 'none';
-                document.getElementById('emojiBar').style.display = 'flex';
-                document.getElementById('inputRow').style.opacity = '1';
-                document.getElementById('inputRow').style.pointerEvents = 'auto';
-                document.getElementById('msgText').placeholder = 'Mesaj yaz... (yardım için /help)';
-                document.getElementById('msgText').disabled = false;
-                document.getElementById('fileBtn').style.display = 'inline-flex';
-                document.getElementById('sendBtn').style.display = 'inline-flex';
-                if (isInVoiceCall) leaveVoiceCall();
-                updateVoiceMicBtn();
-            }
-        }
-
-        function sendSystemMessage(text) {
-            if (!currentTopic) return;
-            const now = new Date();
-            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-            const fullDate = now.toLocaleString('tr-TR');
-            const msgId = Date.now() + '_sys_' + Math.random().toString(36).substr(2, 4);
-            const payload = { type: 'system', msgId, userId: 'system', gonderen: '🛡️ Sistem', pp: '', content: text, time: timeStr, fullDate, isSystem: true };
-            client.publish(currentTopic, JSON.stringify(payload));
-        }
-
-        function handleCommand(text) {
-            const trimmed = text.trim();
-            if (trimmed === '/help') { toggleHelp(); return true; }
-            if (trimmed === '/stats') { const s = getStats(USER_ID); showToast(`📊 ${username} - Seviye ${s.level} (${s.xp}/${s.level*20} XP), ${s.messages} mesaj, ${s.bans} kez banlandı`); return true; }
-            if (trimmed === '/level') { const s = getStats(USER_ID); showToast(`⭐ ${username} - Seviye ${s.level} (${s.xp}/${s.level*20} XP)`); return true; }
-            if (trimmed === '/tasks') { toggleTasks(); return true; }
-            if (trimmed === '/leaderboard') { toggleLeaderboard(); return true; }
-            if (trimmed === '/adminlist') {
-                const adminList = [];
-                for (let key in userData.admins) { if (key.startsWith(currentRoomName + '|')) { const user = key.split('|')[1]; if (user !== username) adminList.push(user); } }
-                const roomData = userData.rooms[currentRoomName];
-                if (roomData && roomData.owner !== username && roomData.owner !== 'Sistem') adminList.push(roomData.owner + ' 👑');
-                if (adminList.length === 0) showToast('📋 Admin listesi boş');
-                else showToast('📋 Adminler: ' + adminList.join(', '));
-                return true;
-            }
-            const isOwnerOrAdmin = isOwner || isAdmin;
-            if (!isOwnerOrAdmin) { showToast('⛔ Bu komut için yetkin yok!'); return true; }
-            if (trimmed === '/clear') {
-                if (currentRoomName === "Genel Sohbet" || currentRoomName === "SesliSohbet") { showToast('⛔ Bu oda temizlenemez!'); return true; }
-                if (confirm(`"${currentRoomName}" odasındaki tüm mesajlar silinecek. Onaylıyor musun?`)) {
-                    saveMessageHistory(currentRoomName, []);
-                    renderMessages(currentRoomName);
-                    const payload = JSON.stringify({ type: 'clear_chat', by: username, userId: USER_ID });
-                    client.publish(currentTopic, payload);
-                    sendSystemMessage(`🧹 ${username} sohbeti temizledi!`);
-                }
-                return true;
-            }
-            if (trimmed.startsWith('/ban_')) {
-                const target = trimmed.substring(5).trim();
-                if (!target) { showToast('⚠️ Kullanıcı adı girin: /ban_kullanıcı'); return true; }
-                if (target === username) { showToast('⚠️ Kendini banlayamazsın!'); return true; }
-                if (isAdminUser(target, currentRoomName) || (userData.rooms[currentRoomName] && userData.rooms[currentRoomName].owner === target)) { showToast('⛔ Admin veya sahibi banlayamazsın!'); return true; }
-                banUser(target, currentRoomName, 3600000);
-                sendSystemMessage(`🚫 ${target} 1 saatliğine banlandı!`);
-                showToast(`🚫 ${target} banlandı!`);
-                return true;
-            }
-            if (trimmed.startsWith('/unban_')) {
-                const target = trimmed.substring(7).trim();
-                if (!target) { showToast('⚠️ Kullanıcı adı girin: /unban_kullanıcı'); return true; }
-                unbanUser(target, currentRoomName);
-                sendSystemMessage(`✅ ${target} banı kaldırıldı!`);
-                showToast(`✅ ${target} banı kaldırıldı!`);
-                return true;
-            }
-            if (trimmed.startsWith('/admin_')) {
-                const target = trimmed.substring(6).trim();
-                if (!target) { showToast('⚠️ Kullanıcı adı girin: /admin_kullanıcı'); return true; }
-                if (target === username) { showToast('⚠️ Kendine admin veremezsin!'); return true; }
-                if (isAdminUser(target, currentRoomName)) { showToast(`⚠️ ${target} zaten admin!`); return true; }
-                if (userData.rooms[currentRoomName] && userData.rooms[currentRoomName].owner === target) { showToast(`⚠️ ${target} oda sahibi zaten!`); return true; }
-                setAdmin(target, currentRoomName);
-                showToast(`👑 ${target} admin yapıldı!`);
-                return true;
-            }
-            if (trimmed.startsWith('/message_')) {
-                const msg = trimmed.substring(9).trim();
-                if (!msg) { showToast('⚠️ Mesaj girin: /message_önemli mesaj'); return true; }
-                const fullMsg = `📢 ÖNEMLİ DUYURU - ${username}: ${msg}`;
-                sendSystemMessage(fullMsg);
-                showToast('📢 Duyuru gönderildi!');
-                playAdminAnnouncementSound();
-                setTimeout(() => { showToast('🔔 ADMIN DUYURUSU: ' + msg.substring(0, 30) + (msg.length > 30 ? '…' : '')); }, 500);
-                return true;
-            }
-            return false;
-        }
-
-        function toggleHelp() { document.getElementById('helpPanel').classList.toggle('show'); }
-
-        // ============================================================
-        // ===== MENTION =====
-        function handleMention() {
-            const input = document.getElementById('msgText');
-            const val = input.value;
-            const cursorPos = input.selectionStart;
-            const atIndex = val.lastIndexOf('@', cursorPos);
-            if (atIndex !== -1) {
-                const afterAt = val.substring(atIndex + 1, cursorPos);
-                if (!afterAt.includes(' ')) { mentionQuery = afterAt; showMentionSuggest(afterAt); return; }
-            }
-            hideMentionSuggest();
-        }
-
-        function showMentionSuggest(query) {
-            const suggest = document.getElementById('mentionSuggest');
-            const users = new Set();
-            for (let u in onlineUsers) { if (u !== username && u && u !== '🛡️ Sistem') users.add(u); }
-            const history = getMessageHistory(currentRoomName);
-            for (let msg of history) { if (msg.gonderen && msg.gonderen !== username && msg.gonderen !== '🛡️ Sistem') users.add(msg.gonderen); }
-            const roomData = userData.rooms[currentRoomName];
-            if (roomData && roomData.owner !== username && roomData.owner !== 'Sistem') users.add(roomData.owner);
-            const filtered = Array.from(users).filter(u => u.toLowerCase().includes(query.toLowerCase()));
-            if (filtered.length === 0) { hideMentionSuggest(); return; }
-            suggest.innerHTML = '';
-            filtered.forEach(u => {
-                const item = document.createElement('div');
-                item.className = 'mention-item';
-                const pp = onlineUsers[u] || 'https://www.w3schools.com/howto/img_avatar.png';
-                item.innerHTML = `<img src="${pp}" alt=""><span class="mention-name">${u}</span>`;
-                item.onclick = () => {
-                    const input = document.getElementById('msgText');
-                    const val = input.value;
-                    const atIndex = val.lastIndexOf('@', input.selectionStart);
-                    if (atIndex !== -1) {
-                        const before = val.substring(0, atIndex);
-                        const after = val.substring(input.selectionStart);
-                        input.value = before + '@' + u + ' ' + after;
-                        input.focus();
-                        input.selectionStart = input.selectionEnd = before.length + u.length + 2;
-                    }
-                    hideMentionSuggest();
-                };
-                suggest.appendChild(item);
-            });
-            suggest.classList.add('show');
-            mentionSuggestOpen = true;
-        }
-
-        function hideMentionSuggest() { document.getElementById('mentionSuggest').classList.remove('show'); mentionSuggestOpen = false; }
-
-        document.addEventListener('click', function(e) {
-            const suggest = document.getElementById('mentionSuggest');
-            const input = document.getElementById('msgText');
-            if (!suggest.contains(e.target) && e.target !== input) hideMentionSuggest();
-        });
-
-        function processMentions(text) {
-            const mentionRegex = /@(\w+)/g;
-            let match;
-            let mentioned = [];
-            while ((match = mentionRegex.exec(text)) !== null) {
-                const name = match[1];
-                if (name !== username && onlineUsers[name]) mentioned.push(name);
-            }
-            return mentioned;
-        }
-
-        function notifyMention(mentionedUsers, byUser) {
-            for (let u of mentionedUsers) {
-                if (u === username) {
-                    showToast(`🔔 ${byUser} seni etiketledi!`);
-                    playMentionSound();
-                    unreadCount++;
-                    updateTitleNotification();
-                    const badge = document.getElementById('notifBadge');
-                    badge.textContent = `🔔 ${byUser} seni etiketledi!`;
-                    badge.style.display = 'block';
-                    setTimeout(() => { badge.style.display = 'none'; }, 5000);
-                }
-            }
-        }
-
-        // ============================================================
-        // ===== MQTT BAŞLAT =====
-        function initMQTT() {
-            client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-            client.on('connect', () => {
-                console.log("✅ MQTT bağlandı");
-                client.subscribe('cengo/room-list-sync');
-                client.publish('cengo/room-list-sync', JSON.stringify({ type: 'get_rooms' }));
-                renderRooms();
-                checkAndDeleteExpiredRooms();
-                setTimeout(() => { joinRoom("Genel Sohbet"); }, 500);
-                client.subscribe('cengo/online');
-                client.publish('cengo/online', JSON.stringify({ type: 'online', user: username, userId: USER_ID, pp: myProfileData }));
-                client.subscribe('cengo/voice/+');
-            });
-            client.on('message', (top, message) => {
-                try {
-                    const data = JSON.parse(message.toString());
-                    if (top.startsWith('cengo/voice/')) {
-                        if (data.type === 'voice_join') { voiceRoomUsers[data.user] = true; renderVoiceUsers(); if (data.user !== username) showToast(`🔊 ${data.user} sesli sohbete katıldı!`); }
-                        else if (data.type === 'voice_leave') { delete voiceRoomUsers[data.user]; renderVoiceUsers(); if (data.user !== username) showToast(`🔇 ${data.user} sesli sohbetten ayrıldı.`); }
-                        return;
-                    }
-                    if (top === 'cengo/online') {
-                        if (data.type === 'online') { onlineUsers[data.user] = data.pp || 'https://www.w3schools.com/howto/img_avatar.png'; updateOnlineCount(); }
-                        else if (data.type === 'offline') { delete onlineUsers[data.user]; updateOnlineCount(); }
-                        return;
-                    }
-                    if (top === 'cengo/room-list-sync') {
-                        if (data.type === 'room_sync' && data.rooms) {
-                            let changed = false;
-                            for (let roomName in data.rooms) { if (!userData.rooms[roomName]) { userData.rooms[roomName] = data.rooms[roomName]; changed = true; } }
-                            if (!userData.rooms["Genel Sohbet"]) { userData.rooms["Genel Sohbet"] = { pass: "", owner: "Sistem" }; changed = true; }
-                            if (!userData.rooms["SesliSohbet"]) { userData.rooms["SesliSohbet"] = { pass: "", owner: "Sistem", isVoice: true }; changed = true; }
-                            if (changed) { saveAllData(); renderRooms(); }
-                            initialRoomSyncDone = true;
-                        } else if (data.type === 'get_rooms') {
-                            const myRooms = {};
-                            for (let roomName in userData.rooms) { if (userData.rooms[roomName].owner === username || roomName === "Genel Sohbet" || roomName === "SesliSohbet") { myRooms[roomName] = userData.rooms[roomName]; } }
-                            if (Object.keys(myRooms).length === 0) { myRooms["Genel Sohbet"] = { pass: "", owner: "Sistem" }; myRooms["SesliSohbet"] = { pass: "", owner: "Sistem", isVoice: true }; }
-                            client.publish('cengo/room-list-sync', JSON.stringify({ type: 'room_sync', rooms: myRooms }));
-                        }
-                        return;
-                    }
-                    if (top === currentTopic + '/typing') {
-                        if (data.user !== username) {
-                            const indicator = document.getElementById('typingIndicator');
-                            document.getElementById('typingUser').textContent = data.user;
-                            indicator.classList.toggle('show', data.typing);
-                            clearTimeout(indicator._timeout);
-                            if (data.typing) { indicator._timeout = setTimeout(() => { indicator.classList.remove('show'); }, 3000); }
-                        }
-                        return;
-                    }
-                    if (top !== currentTopic) return;
-                    if (data.type === 'request_history') { handleHistoryRequest(data); return; }
-                    if (data.type === 'history_response') { handleHistoryResponse(data); return; }
-                    if (data.type === 'delete_msg' && data.msgId) {
-                        const history = getMessageHistory(currentRoomName);
-                        const msg = history.find(m => m.msgId === data.msgId);
-                        if (msg && msg.userId === data.userId) {
-                            let newHistory = history.filter(m => m.msgId !== data.msgId);
-                            saveMessageHistory(currentRoomName, newHistory);
-                            renderMessages(currentRoomName);
-                        }
-                        return;
-                    }
-                    if (data.type === 'clear_chat') {
-                        if (data.userId === USER_ID || isAdmin || isOwner) { saveMessageHistory(currentRoomName, []); renderMessages(currentRoomName); showToast("🧹 Sohbet temizlendi!"); }
-                        return;
-                    }
-                    if (currentRoomName === 'SesliSohbet' && data.type !== 'system' && data.gonderen !== '🛡️ Sistem') return;
-                    if (data.type === 'text' && data.content) {
-                        const mentioned = processMentions(data.content);
-                        if (mentioned.length > 0) { notifyMention(mentioned, data.gonderen); data.mentions = mentioned; }
-                    }
-                    if (data.replyTo && data.replyTo.gonderen === username) { playNotificationSound(); showToast("🔔 " + data.gonderen + " sana yanıt verdi!"); unreadCount++; updateTitleNotification(); }
-                    if (data.gonderen !== username && data.type !== 'system') { unreadCount++; updateTitleNotification(); }
-                    addMessageToHistory(currentRoomName, data);
-                    displayMessage(data, true);
-                } catch (e) { console.error("MQTT mesaj hatası:", e); }
-            });
-            client.on('offline', () => { console.log("⚠️ Bağlantı koptu, yeniden bağlanılıyor..."); setTimeout(initMQTT, 3000); });
-        }
-
-        function updateOnlineCount() { const count = Object.keys(onlineUsers).length; document.getElementById('onlineCount').textContent = '👤 ' + count; }
-
-        function requestHistory(roomName) {
-            const container = document.getElementById("chatMessages");
-            const history = getMessageHistory(roomName);
-            if (history.length > 0) renderMessages(roomName);
-            else {
-                if (roomName === 'SesliSohbet') container.innerHTML = `<div style="text-align:center; color:#10b981; margin-top:80px;">🎤 Sesli sohbet odasına hoş geldiniz!<br><span style="font-size:14px;color:var(--text-secondary);">Mikrofonu aç ve konuşmaya başla.</span></div>`;
-                else container.innerHTML = `<div style="text-align:center; color:#475569; margin-top:80px;">💬 Henüz mesaj yok. İlk mesajı sen gönder!</div>`;
-            }
-            initialHistoryLoaded = true;
-        }
-
-        function handleHistoryRequest(data) {
-            if (data.requester === username) return;
-            const history = getMessageHistory(data.room);
-            const limited = history.slice(-data.limit || 50);
-            if (limited.length === 0) return;
-            const payload = JSON.stringify({ type: 'history_response', room: data.room, messages: limited, target: data.requester });
-            client.publish(currentTopic, payload);
-        }
-
-        function handleHistoryResponse(data) {
-            if (data.target !== username) return;
-            if (data.room !== currentRoomName) return;
-            const currentHistory = getMessageHistory(currentRoomName);
-            const existingIds = new Set(currentHistory.map(m => m.msgId));
-            const newMessages = data.messages.filter(m => !existingIds.has(m.msgId));
-            if (newMessages.length > 0) {
-                const allMessages = [...currentHistory, ...newMessages];
-                allMessages.sort((a, b) => (a.msgId || '').localeCompare(b.msgId || ''));
-                saveMessageHistory(currentRoomName, allMessages);
-                renderMessages(currentRoomName);
-            }
-            initialHistoryLoaded = true;
-        }
-
-        function renderRooms() {
-            const list = document.getElementById("roomList");
-            list.innerHTML = "";
-            const sortedRooms = Object.keys(userData.rooms).sort((a, b) => {
-                if (a === "Genel Sohbet") return -1;
-                if (a === "SesliSohbet") return -1;
-                if (b === "Genel Sohbet") return 1;
-                if (b === "SesliSohbet") return 1;
-                return a.localeCompare(b);
-            });
-            for (let roomName of sortedRooms) {
-                const data = userData.rooms[roomName];
-                const div = document.createElement("div");
-                div.className = `room-item ${currentRoomName === roomName ? 'active' : ''}`;
-                const lock = data.pass ? "🔒" : "";
-                const isVoice = data.isVoice || roomName === "SesliSohbet";
-                let expiryBadge = '';
-                if (roomName !== "Genel Sohbet" && roomName !== "SesliSohbet") {
-                    const lastActivity = getRoomActivity(roomName);
-                    if (lastActivity > 0) {
-                        const hoursSince = (Date.now() - lastActivity) / (1000 * 60 * 60);
-                        const remainingHours = Math.max(0, ROOM_EXPIRY_HOURS - hoursSince);
-                        if (remainingHours < 24) {
-                            const remainingText = remainingHours < 1 ? Math.floor(remainingHours * 60) + 'dk' : Math.floor(remainingHours) + 's';
-                            expiryBadge = `<span class="expiry-badge">⏳ ${remainingText}</span>`;
-                        }
-                    }
-                }
-                let voiceBadge = isVoice ? `<span class="voice-badge">🎤 Sesli</span>` : '';
-                let actions = '';
-                if (roomName !== "Genel Sohbet" && roomName !== "SesliSohbet" && data.owner === username) {
-                    actions = `<div style="display:flex; gap:4px;"><button onclick="editRoom('${roomName}')" style="background:none; border:none; color:var(--text-secondary); cursor:pointer;">⚙️</button><button onclick="deleteRoom('${roomName}')" style="background:none; border:none; color:var(--text-secondary); cursor:pointer;">🗑️</button></div>`;
-                }
-                div.innerHTML = `<span style="flex:1; cursor:pointer;" onclick="tryJoinRoom('${roomName}')"># ${roomName} ${lock} ${voiceBadge} ${expiryBadge}</span>${actions}`;
-                list.appendChild(div);
-            }
-        }
-
-        function tryJoinRoom(roomName) {
-            if (isUserBanned(username, roomName)) { const remaining = getBanRemaining(username, roomName); alert(`⛔ Bu odadan banlandın! Kalan süre: ${remaining} dakika`); return; }
-            const data = userData.rooms[roomName];
-            if (data && data.pass) { const p = prompt(`"${roomName}" şifreli. Şifre:`); if (p !== data.pass) { alert("Şifre yanlış!"); return; } }
-            joinRoom(roomName);
-        }
-
-        function getSafeTopic(roomName) { return 'cengo/rooms/' + encodeURIComponent(roomName); }
-
-        function joinRoom(roomName) {
-            currentRoomName = roomName;
-            const newTopic = getSafeTopic(roomName);
-            if (currentTopic) { client.unsubscribe(currentTopic); client.unsubscribe(currentTopic + '/typing'); }
-            currentTopic = newTopic;
-            client.subscribe(currentTopic);
-            client.subscribe(currentTopic + '/typing');
-            document.getElementById("currentRoomTitle").innerHTML = "💬 " + roomName + ' <span class="online-count" id="onlineCount">👤 0</span>';
-            updateRoomActivity(roomName);
-            renderMessages(roomName);
-            requestHistory(roomName);
-            renderRooms();
-            document.getElementById('roomPanel').classList.remove('open');
-            cancelReply();
-            updateAdminStatus();
-            client.publish('cengo/online', JSON.stringify({ type: 'online', user: username, userId: USER_ID, pp: myProfileData }));
-            unreadCount = 0;
-            updateTitleNotification();
-            updateVoiceMicBtn();
-        }
-
-        function createRoom() {
-            const name = document.getElementById("newRoomInput").value.trim();
-            const pass = document.getElementById("newRoomPass").value.trim();
-            if (!name) return;
-            if (name === "Genel Sohbet" || name === "SesliSohbet") { alert("Bu isim ayrılmış!"); return; }
-            if (userData.rooms[name]) { alert("Zaten var!"); return; }
-            const s = getStats(USER_ID);
-            if (s.level < 5) { showToast(`⛔ Oda oluşturmak için seviye 5 olmalısın! (Şu an seviye ${s.level})`); return; }
-            userData.rooms[name] = { pass: pass, owner: username };
-            saveAllData();
-            updateRoomActivity(name);
-            const myRooms = {};
-            for (let roomName in userData.rooms) { if (userData.rooms[roomName].owner === username || roomName === "Genel Sohbet" || roomName === "SesliSohbet") { myRooms[roomName] = userData.rooms[roomName]; } }
-            client.publish('cengo/room-list-sync', JSON.stringify({ type: 'room_sync', rooms: myRooms }));
-            document.getElementById("newRoomInput").value = "";
-            document.getElementById("newRoomPass").value = "";
-            renderRooms();
-            joinRoom(name);
-        }
-
-        function editRoom(roomName) {
-            const data = userData.rooms[roomName];
-            if (!data || data.owner !== username) { alert("Sadece kurucu düzenleyebilir!"); return; }
-            const newName = prompt("Yeni oda adı:", roomName);
-            if (!newName || !newName.trim()) return;
-            const trimmed = newName.trim();
-            if (trimmed === "Genel Sohbet" || trimmed === "SesliSohbet") { alert("Bu isim ayrılmış!"); return; }
-            const newPass = prompt("Yeni şifre (boş bırak şifresiz):", data.pass);
-            if (trimmed !== roomName && userData.rooms[trimmed]) { alert("Bu isimde oda var!"); return; }
-            delete userData.rooms[roomName];
-            userData.rooms[trimmed] = { pass: newPass !== null ? newPass.trim() : data.pass, owner: username };
-            if (userData.roomLastActivity[roomName]) { userData.roomLastActivity[trimmed] = userData.roomLastActivity[roomName]; delete userData.roomLastActivity[roomName]; }
-            if (userData.messageHistory[roomName]) { userData.messageHistory[trimmed] = userData.messageHistory[roomName]; delete userData.messageHistory[roomName]; }
-            saveAllData();
-            const myRooms = {};
-            for (let roomName2 in userData.rooms) { if (userData.rooms[roomName2].owner === username || roomName2 === "Genel Sohbet" || roomName2 === "SesliSohbet") { myRooms[roomName2] = userData.rooms[roomName2]; } }
-            client.publish('cengo/room-list-sync', JSON.stringify({ type: 'room_sync', rooms: myRooms }));
-            renderRooms();
-            if (currentRoomName === roomName) joinRoom(trimmed);
-        }
-
-        function deleteRoom(roomName) {
-            if (roomName === "Genel Sohbet" || roomName === "SesliSohbet") return;
-            const data = userData.rooms[roomName];
-            if (!data || data.owner !== username) { alert("Sadece kurucu silebilir!"); return; }
-            if (confirm(`"${roomName}" odasını sil?`)) {
-                delete userData.rooms[roomName];
-                delete userData.roomLastActivity[roomName];
-                delete userData.messageHistory[roomName];
-                saveAllData();
-                const myRooms = {};
-                for (let roomName2 in userData.rooms) { if (userData.rooms[roomName2].owner === username || roomName2 === "Genel Sohbet" || roomName2 === "SesliSohbet") { myRooms[roomName2] = userData.rooms[roomName2]; } }
-                client.publish('cengo/room-list-sync', JSON.stringify({ type: 'room_sync', rooms: myRooms }));
-                renderRooms();
-                if (currentRoomName === roomName) joinRoom("Genel Sohbet");
-            }
-        }
-
-        // ============================================================
-        // ===== MESAJ GÖNDERME =====
-        function sendMessage() {
-            if (currentRoomName === 'SesliSohbet') { showToast('⛔ Bu oda sadece sesli sohbet içindir!'); document.getElementById("msgText").value = ""; return; }
-            const input = document.getElementById("msgText");
-            let text = input.value.trim();
-            if (!text || !currentTopic) return;
-            if (isUserBanned(username, currentRoomName)) { const remaining = getBanRemaining(username, currentRoomName); showToast(`⛔ Banlandın! Kalan süre: ${remaining} dakika`); input.value = ""; return; }
-            text = censorProfanity(text);
-            if (text.startsWith('/')) { if (handleCommand(text)) { input.value = ""; return; } }
-            const mentionedUsers = processMentions(text);
-            const now = new Date();
-            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-            const fullDate = now.toLocaleString('tr-TR');
-            const msgId = Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-            let payload = { type: 'text', msgId, userId: USER_ID, gonderen: username, pp: myProfileData, color: userBubbleColor,
-                content: text, time: timeStr, fullDate, isAdmin: isAdmin || isOwner, isOwner, level: getStats(USER_ID).level,
-                levelBadge: getLevelBadge(getStats(USER_ID).level), mentions: mentionedUsers };
-            if (replyTarget) { payload.replyTo = { msgId: replyTarget.msgId, gonderen: replyTarget.gonderen, content: replyTarget.content.substring(0, 40) + (replyTarget.content.length > 40 ? '…' : '') }; cancelReply(); }
-            client.publish(currentTopic, JSON.stringify(payload));
-            input.value = "";
-            document.getElementById('typingIndicator').classList.remove('show');
-            updateRoomActivity(currentRoomName);
-            updateStats(USER_ID, 'message');
-            updateTaskProgress(USER_ID);
-            unreadCount = 0;
-            updateTitleNotification();
-            hideMentionSuggest();
-        }
-
-        function handleTyping() {
-            if (currentRoomName === 'SesliSohbet') return;
-            if (!currentTopic) return;
-            if (isUserBanned(username, currentRoomName)) { document.getElementById('msgText').placeholder = '⛔ Banlandın!'; return; }
-            clearTimeout(typingTimeout);
-            client.publish(currentTopic + '/typing', JSON.stringify({ user: username, userId: USER_ID, typing: true }));
-            typingTimeout = setTimeout(() => { client.publish(currentTopic + '/typing', JSON.stringify({ user: username, userId: USER_ID, typing: false })); }, 1500);
-            handleMention();
-        }
-
-        function cancelReply() { replyTarget = null; document.getElementById("replyCancelBar").classList.remove('show'); document.getElementById("msgText").placeholder = "Mesaj yaz... (yardım için /help)"; }
-        function setReplyTarget(target) {
-            if (currentRoomName === 'SesliSohbet') { showToast('⛔ Sesli sohbet odasında yanıtlayamazsın!'); return; }
-            replyTarget = target;
-            document.getElementById("replyTargetName").textContent = target.gonderen;
-            document.getElementById("replyCancelBar").classList.add('show');
-            document.getElementById("msgText").focus();
-        }
-
-        function handleFile(input) {
-            if (currentRoomName === 'SesliSohbet') { showToast('⛔ Sesli sohbet odasında dosya gönderemezsin!'); input.value = ""; return; }
-            const file = input.files[0];
-            if (!file || !currentTopic) return;
-            if (isUserBanned(username, currentRoomName)) { const remaining = getBanRemaining(username, currentRoomName); showToast(`⛔ Banlandın! Kalan süre: ${remaining} dakika`); input.value = ""; return; }
-            if (file.size > 1024 * 1024) { alert("Max 1 MB!"); input.value = ""; return; }
-            const now = new Date();
-            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-            const fullDate = now.toLocaleString('tr-TR');
-            const msgId = Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                let fileType = 'file';
-                if (file.type.startsWith('image/')) fileType = 'image';
-                else if (file.type.startsWith('audio/')) fileType = 'audio';
-                let payload = { type: fileType, msgId, userId: USER_ID, gonderen: username, pp: myProfileData, color: userBubbleColor,
-                    content: e.target.result, fileName: file.name, time: timeStr, fullDate, isAdmin: isAdmin || isOwner,
-                    isOwner, level: getStats(USER_ID).level, levelBadge: getLevelBadge(getStats(USER_ID).level) };
-                if (replyTarget) { payload.replyTo = { msgId: replyTarget.msgId, gonderen: replyTarget.gonderen, content: replyTarget.content.substring(0, 40) + (replyTarget.content.length > 40 ? '…' : '') }; cancelReply(); }
-                client.publish(currentTopic, JSON.stringify(payload));
-                updateRoomActivity(currentRoomName);
-                updateStats(USER_ID, 'message');
-                updateTaskProgress(USER_ID);
-            };
-            reader.readAsDataURL(file);
-            input.value = "";
-        }
-
-        function toggleRecording() {
-            if (currentRoomName === 'SesliSohbet') { showToast('⛔ Sesli sohbet odasında ses kaydı gönderemezsin, direkt konuş!'); return; }
-            if (isRecording) { stopRecording(); } else { startRecording(); }
-        }
-
-        function startRecording() {
-            if (!currentTopic || currentRoomName === 'SesliSohbet') return;
-            if (isUserBanned(username, currentRoomName)) { showToast('⛔ Banlandın! Ses kaydı gönderemezsin.'); return; }
-            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-                mediaRecorder.ondataavailable = event => { audioChunks.push(event.data); };
-                mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const now = new Date();
-                        const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-                        const fullDate = now.toLocaleString('tr-TR');
-                        const msgId = Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-                        const payload = { type: 'audio', msgId, userId: USER_ID, gonderen: username, pp: myProfileData, color: userBubbleColor,
-                            content: e.target.result, fileName: 'ses_kaydi.webm', time: timeStr, fullDate, isAdmin: isAdmin || isOwner,
-                            isOwner, level: getStats(USER_ID).level, levelBadge: getLevelBadge(getStats(USER_ID).level) };
-                        if (replyTarget) { payload.replyTo = { msgId: replyTarget.msgId, gonderen: replyTarget.gonderen, content: replyTarget.content.substring(0, 40) + (replyTarget.content.length > 40 ? '…' : '') }; cancelReply(); }
-                        client.publish(currentTopic, JSON.stringify(payload));
-                        updateRoomActivity(currentRoomName);
-                        updateStats(USER_ID, 'message');
-                        updateTaskProgress(USER_ID);
-                        showToast("🎤 Ses kaydı gönderildi!");
-                    };
-                    reader.readAsDataURL(audioBlob);
-                    stream.getTracks().forEach(track => track.stop());
-                    document.getElementById('recordingIndicator').classList.remove('show');
-                    document.getElementById('voiceBtn').textContent = '🎤';
-                    isRecording = false;
-                };
-                mediaRecorder.start();
-                isRecording = true;
-                document.getElementById('recordingIndicator').classList.add('show');
-                document.getElementById('voiceBtn').textContent = '⏹️';
-                showToast("🔴 Kayıt başladı...");
-            }).catch(() => { alert("Mikrofon izni gerekli!"); });
-        }
-
-        function stopRecording() { if (mediaRecorder && isRecording) mediaRecorder.stop(); }
-
-        function deleteMessage(msgId) {
-            if (!currentTopic || !currentRoomName || currentRoomName === 'SesliSohbet') return;
-            const history = getMessageHistory(currentRoomName);
-            const msg = history.find(m => m.msgId === msgId);
-            if (!msg) { showToast('⚠️ Mesaj bulunamadı!'); return; }
-            if (msg.userId !== USER_ID && !isAdmin && !isOwner) { showToast('⛔ Bu mesajı silemezsin! (Sadece sahibi silebilir)'); return; }
-            const payload = JSON.stringify({ type: 'delete_msg', msgId, gonderen: username, userId: USER_ID });
-            client.publish(currentTopic, payload);
-            const newHistory = history.filter(m => m.msgId !== msgId);
-            saveMessageHistory(currentRoomName, newHistory);
-            renderMessages(currentRoomName);
-            showToast('🗑️ Mesaj silindi!');
-        }
-
-        function copyMessage(text) {
-            navigator.clipboard.writeText(text).then(() => { showToast("📋 Kopyalandı!"); }).catch(() => {
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                textarea.remove();
-                showToast("📋 Kopyalandı!");
-            });
-        }
-
-        function banUserFromMsg(user) {
-            if (!isAdmin && !isOwner) { showToast('⛔ Yetkin yok!'); return; }
-            if (user === username) { showToast('⚠️ Kendini banlayamazsın!'); return; }
-            if (isAdminUser(user, currentRoomName) || (userData.rooms[currentRoomName] && userData.rooms[currentRoomName].owner === user)) { showToast('⛔ Admin veya sahibi banlayamazsın!'); return; }
-            if (confirm(`${user} kullanıcısını 1 saat banlamak istediğine emin misin?`)) {
-                banUser(user, currentRoomName, 3600000);
-                sendSystemMessage(`🚫 ${user} 1 saatliğine banlandı! (${username} tarafından)`);
-                showToast(`🚫 ${user} banlandı!`);
-            }
-        }
-
-        function displayMessage(data, scrollToBottom = true) {
-            const container = document.getElementById("chatMessages");
-            const isMe = data.gonderen === username;
-            const existing = container.querySelector(`[data-msg-id="${data.msgId}"]`);
-            if (existing) return;
-            if (data.isSystem || data.type === 'system') {
-                const msgDiv = document.createElement("div");
-                msgDiv.className = "msg system-msg";
-                const bubble = document.createElement("div");
-                bubble.className = "msg-bubble";
-                bubble.innerHTML = `<span>${data.content}</span>`;
-                msgDiv.appendChild(bubble);
-                container.appendChild(msgDiv);
-                if (scrollToBottom) container.scrollTop = container.scrollHeight;
-                return;
-            }
-            if (currentRoomName === 'SesliSohbet') return;
-            const msgDiv = document.createElement("div");
-            msgDiv.className = "msg " + (isMe ? "my-msg" : "");
-            msgDiv.dataset.msgId = data.msgId || '';
-            const avatar = document.createElement("img");
-            avatar.className = "msg-avatar";
-            avatar.src = data.pp || "https://www.w3schools.com/howto/img_avatar.png";
-            avatar.onclick = () => openUserProfile(data.gonderen, data.pp);
-            const bubble = document.createElement("div");
-            bubble.className = "msg-bubble";
-            const bgColor = data.color || (isMe ? "#3b82f6" : "#2d3a4f");
-            bubble.style.backgroundColor = bgColor;
-            bubble.style.color = isMe ? "#fff" : "#f1f5f9";
-            if (data.replyTo) {
-                const history = getMessageHistory(currentRoomName);
-                const exists = history.some(m => m.msgId === data.replyTo.msgId);
-                if (exists) {
-                    const replyDiv = document.createElement("div");
-                    replyDiv.className = "reply-indicator";
-                    replyDiv.innerHTML = `↩️ <strong>${data.replyTo.gonderen}</strong> <span>${data.replyTo.content}</span>`;
-                    replyDiv.onclick = () => { const target = container.querySelector(`[data-msg-id="${data.replyTo.msgId}"]`); if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
-                    bubble.appendChild(replyDiv);
-                }
-            }
-            if (data.mentions && data.mentions.length > 0) {
-                const mentionDiv = document.createElement('div');
-                mentionDiv.style.cssText = 'font-size:10px; opacity:0.6; margin-bottom:4px; display:flex; gap:4px; flex-wrap:wrap;';
-                data.mentions.forEach(m => {
-                    const badge = document.createElement('span');
-                    badge.className = 'mention-badge';
-                    badge.textContent = '@' + m;
-                    mentionDiv.appendChild(badge);
-                });
-                bubble.appendChild(mentionDiv);
-            }
-            if (data.type === 'text') {
-                const span = document.createElement("span");
-                let content = censorProfanity(data.content);
-                content = content.replace(/@(\w+)/g, (match, name) => {
-                    if (onlineUsers[name] || name === username) { return `<span style="color:#fbbf24;font-weight:600;">@${name}</span>`; }
-                    return match;
-                });
-                span.innerHTML = linkify(content);
-                bubble.appendChild(span);
-            } else if (data.type === 'image') {
-                const img = document.createElement("img");
-                img.src = data.content;
-                img.onclick = () => window.open(data.content, '_blank');
-                bubble.appendChild(img);
-            } else if (data.type === 'audio') {
-                const audio = document.createElement("audio");
-                audio.controls = true;
-                audio.src = data.content;
-                bubble.appendChild(audio);
-            } else if (data.type === 'gif') {
-                const img = document.createElement("img");
-                img.src = data.content;
-                img.onclick = () => window.open(data.content, '_blank');
-                img.style.maxWidth = '250px';
-                bubble.appendChild(img);
-            } else {
-                const a = document.createElement("a");
-                a.href = data.content;
-                a.download = data.fileName || "dosya";
-                a.textContent = `📄 ${data.fileName || 'Dosya'} (İndir)`;
-                a.target = "_blank";
-                a.style.color = isMe ? "#fff" : "#94a3b8";
-                bubble.appendChild(a);
-            }
-            const footer = document.createElement("div");
-            footer.className = "msg-footer";
-            let tags = '';
-            if (data.isOwner) tags += '<span class="owner-tag">👑 Sahip</span> ';
-            else if (data.isAdmin) tags += '<span class="admin-tag">🛡️ Admin</span> ';
-            if (data.level) tags += `<span class="level-tag">${data.levelBadge || '⭐'} Lv.${data.level}</span> `;
-            if (data.userId && data.userId !== 'system') { const shortId = data.userId.substring(0, 6) + '…'; tags += `<span style="font-size:7px;opacity:0.4;background:var(--bg-card);padding:0 4px;border-radius:4px;">🔑${shortId}</span> `; }
-            footer.innerHTML = `<span class="sender-name" onclick="openUserProfile('${data.gonderen}', '${data.pp}')">~ ${data.gonderen}</span> ${tags}<span class="time-tooltip" title="${data.fullDate || data.time || ''}">${data.time || ''}</span>`;
-            bubble.appendChild(footer);
-            const actions = document.createElement("div");
-            actions.className = "msg-actions";
-            const copyBtn = document.createElement("button");
-            copyBtn.className = "copy-btn";
-            copyBtn.innerHTML = "📋";
-            copyBtn.title = "Kopyala";
-            copyBtn.onclick = (e) => { e.stopPropagation(); const text = data.type === 'text' ? data.content : (data.fileName || 'Dosya'); copyMessage(text); };
-            actions.appendChild(copyBtn);
-            if ((isAdmin || isOwner) && !isMe && data.gonderen !== '🛡️ Sistem') {
-                const banBtn = document.createElement("button");
-                banBtn.className = "ban-btn";
-                banBtn.innerHTML = "🚫";
-                banBtn.title = "Banla";
-                banBtn.onclick = (e) => { e.stopPropagation(); banUserFromMsg(data.gonderen); };
-                actions.appendChild(banBtn);
-            }
-            if (!isMe) {
-                const replyBtn = document.createElement("button");
-                replyBtn.className = "reply-btn";
-                replyBtn.innerHTML = "↩️";
-                replyBtn.title = "Yanıtla";
-                replyBtn.onclick = (e) => { e.stopPropagation(); setReplyTarget({ msgId: data.msgId, gonderen: data.gonderen, content: data.content || "Dosya" }); };
-                actions.appendChild(replyBtn);
-            }
-            const canDelete = (isMe || isAdmin || isOwner) && data.msgId && data.gonderen !== '🛡️ Sistem';
-            if (canDelete) {
-                const delBtn = document.createElement("button");
-                delBtn.className = "del-btn";
-                delBtn.innerHTML = "✕";
-                delBtn.title = "Sil";
-                delBtn.onclick = (e) => { e.stopPropagation(); deleteMessage(data.msgId); };
-                actions.appendChild(delBtn);
-            }
-            msgDiv.appendChild(actions);
-            msgDiv.appendChild(avatar);
-            msgDiv.appendChild(bubble);
-            container.appendChild(msgDiv);
-            if (scrollToBottom) container.scrollTop = container.scrollHeight;
-        }
-
-        function linkify(text) {
-            const urlPattern = /(https?:\/\/[^\s]+)/g;
-            return text.replace(urlPattern, function(url) { return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`; });
-        }
-
-        function renderMessages(roomName) {
-            const container = document.getElementById("chatMessages");
-            container.innerHTML = "";
-            const history = getMessageHistory(roomName);
-            if (history.length === 0) {
-                if (roomName === 'SesliSohbet') { container.innerHTML = `<div style="text-align:center; color:#10b981; margin-top:80px;">🎤 Sesli sohbet odasına hoş geldiniz!<br><span style="font-size:14px;color:var(--text-secondary);">Mikrofonu aç ve konuşmaya başla.</span></div>`; }
-                else container.innerHTML = `<div style="text-align:center; color:#475569; margin-top:80px;">💬 Henüz mesaj yok. İlk mesajı sen gönder!</div>`;
-                return;
-            }
-            history.forEach(data => displayMessage(data, false));
-            container.scrollTop = container.scrollHeight;
-        }
-
-        // ============================================================
-        // ===== PROFİL SİSTEMİ =====
-        let profilePanelOpen = false;
-        let viewingUser = null;
 
         function openMyProfile() {
-            viewingUser = { name: username, pic: myProfileData, bio: userData.bio || '' };
-            const s = getStats(USER_ID);
             document.getElementById('profilePanelAvatar').src = myProfileData;
             document.getElementById('profileUsernameInput').value = username;
             document.getElementById('profileBioInput').value = userData.bio || '';
-            document.getElementById('ppMsgCount').textContent = s.messages;
-            document.getElementById('ppLevel').textContent = s.level;
-            document.getElementById('ppXp').textContent = s.xp;
+            const stats = getStats(USER_ID);
+            document.getElementById('ppMsgCount').textContent = stats.messages;
+            document.getElementById('ppLevel').textContent = stats.level;
+            document.getElementById('ppXp').textContent = stats.xp;
             document.getElementById('profilePanel').classList.add('show');
-            profilePanelOpen = true;
-        }
-
-        function openUserProfile(userName, userPic) {
-            viewingUser = { name: userName, pic: userPic, bio: '' };
-            // Kullanıcının bio'sunu bul (mesaj geçmişinden veya kayıtlı verilerden)
-            let userBio = '';
-            for (let room in userData.messageHistory) {
-                for (let msg of userData.messageHistory[room]) {
-                    if (msg.gonderen === userName && msg.bio) { userBio = msg.bio; break; }
-                }
-                if (userBio) break;
-            }
-            // Stats'ı bul
-            let userStats = { messages: 0, level: 1, xp: 0 };
-            for (let id in userData.stats) {
-                for (let room in userData.messageHistory) {
-                    for (let msg of userData.messageHistory[room]) {
-                        if (msg.gonderen === userName && msg.userId === id) {
-                            userStats = userData.stats[id];
-                            break;
-                        }
-                    }
-                }
-            }
-            document.getElementById('profilePanelAvatar').src = userPic || 'https://www.w3schools.com/howto/img_avatar.png';
-            document.getElementById('profileUsernameInput').value = userName;
-            document.getElementById('profileBioInput').value = userBio;
-            document.getElementById('ppMsgCount').textContent = userStats.messages || 0;
-            document.getElementById('ppLevel').textContent = userStats.level || 1;
-            document.getElementById('ppXp').textContent = userStats.xp || 0;
-            document.getElementById('profilePanel').classList.add('show');
-            profilePanelOpen = true;
-            // Kendi profilinse düzenlenebilir yap
-            const isOwnProfile = userName === username;
-            document.getElementById('profileUsernameInput').disabled = !isOwnProfile;
-            document.getElementById('profileBioInput').disabled = !isOwnProfile;
-            document.querySelector('.pp-actions .btn').style.display = isOwnProfile ? 'inline-block' : 'none';
-            document.querySelector('.pp-actions .btn-outline').textContent = isOwnProfile ? 'İptal' : 'Kapat';
         }
 
         function closeProfilePanel() {
             document.getElementById('profilePanel').classList.remove('show');
-            profilePanelOpen = false;
-            viewingUser = null;
-            document.getElementById('profileUsernameInput').disabled = false;
-            document.getElementById('profileBioInput').disabled = false;
-            document.querySelector('.pp-actions .btn').style.display = 'inline-block';
-            document.querySelector('.pp-actions .btn-outline').textContent = 'İptal';
         }
 
         function saveProfile() {
-            if (!viewingUser || viewingUser.name !== username) { closeProfilePanel(); return; }
             const newName = document.getElementById('profileUsernameInput').value.trim();
             const newBio = document.getElementById('profileBioInput').value.trim();
-            if (newName && newName !== username) {
-                if (userData.registeredUsers.includes(newName)) {
-                    if (!confirm(`"${newName}" kullanıcı adı zaten kullanılıyor. Yine de bu ismi almak istiyor musunuz?`)) return;
-                    userData.registeredUsers = userData.registeredUsers.filter(u => u !== newName);
-                }
-                userData.registeredUsers = userData.registeredUsers.filter(u => u !== username);
-                username = newName;
+            if (newName) {
+                username = censorProfanity(newName);
                 userData.username = username;
-                userData.registeredUsers.push(username);
             }
-            if (newBio !== undefined) userData.bio = newBio;
+            userData.bio = censorProfanity(newBio);
             saveAllData();
-            document.getElementById("sidebarUsername").innerText = username;
-            document.getElementById("userInfo").innerHTML = "👤 " + username + ' <span style="font-size:10px;cursor:pointer;" onclick="toggleSound()">' + (soundEnabled ? "🔊" : "🔇") + '</span>';
-            client.publish('cengo/online', JSON.stringify({ type: 'online', user: username, userId: USER_ID, pp: myProfileData }));
-            updateAdminStatus();
-            showToast('✅ Profil kaydedildi!');
+            initializeUserData();
             closeProfilePanel();
-        }
-
-        function changeProfilePicFromPanel(input) {
-            const file = input.files[0];
-            if (!file) return;
-            if (file.size > 1024 * 1024) { alert("Max 1 MB!"); input.value = ""; return; }
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const MAX = 150;
-                    let w = img.width, h = img.height;
-                    if (w > h) { if (w > MAX) { h = h * MAX / w; w = MAX; } } else { if (h > MAX) { w = w * MAX / h; h = MAX; } }
-                    canvas.width = w; canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, w, h);
-                    myProfileData = canvas.toDataURL('image/jpeg', 0.7);
-                    userData.profilePic = myProfileData;
-                    document.getElementById("myProfilePic").src = myProfileData;
-                    document.getElementById('profilePanelAvatar').src = myProfileData;
-                    saveAllData();
-                    client.publish('cengo/online', JSON.stringify({ type: 'online', user: username, userId: USER_ID, pp: myProfileData }));
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
+            showToast('✅ Profil güncellendi!');
         }
 
         function changeProfilePic(input) {
-            const file = input.files[0];
-            if (!file) return;
-            if (file.size > 1024 * 1024) { alert("Max 1 MB!"); input.value = ""; return; }
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const MAX = 150;
-                    let w = img.width, h = img.height;
-                    if (w > h) { if (w > MAX) { h = h * MAX / w; w = MAX; } } else { if (h > MAX) { w = w * MAX / h; h = MAX; } }
-                    canvas.width = w; canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, w, h);
-                    myProfileData = canvas.toDataURL('image/jpeg', 0.7);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    myProfileData = e.target.result;
                     userData.profilePic = myProfileData;
-                    document.getElementById("myProfilePic").src = myProfileData;
                     saveAllData();
-                    client.publish('cengo/online', JSON.stringify({ type: 'online', user: username, userId: USER_ID, pp: myProfileData }));
+                    initializeUserData();
                 };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
+                reader.readAsDataURL(input.files[0]);
+            }
         }
 
-        function updateUserColor(color) { userBubbleColor = color; userData.bubbleColor = color; saveAllData(); }
-
-        function togglePalette() { const popup = document.getElementById('palettePopup'); popup.style.display = popup.style.display === 'none' ? 'flex' : 'none'; }
-        document.addEventListener('click', function(e) {
-            const popup = document.getElementById('palettePopup');
-            const btn = document.getElementById('paletteBtn');
-            if (!popup.contains(e.target) && !btn.contains(e.target)) popup.style.display = 'none';
-        });
-
-        function setBgColor(color) {
-            document.documentElement.style.setProperty('--bg-primary', color);
-            document.documentElement.style.setProperty('--bg-secondary', color);
-            document.documentElement.style.setProperty('--bg-card', color);
-            document.documentElement.style.setProperty('--bg-input', color);
-            const hex = color.replace('#', '');
-            const r = parseInt(hex.substring(0, 2), 16), g = parseInt(hex.substring(2, 4), 16), b = parseInt(hex.substring(4, 6), 16);
-            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-            const text = brightness > 130 ? '#0f172a' : '#f1f5f9';
-            document.documentElement.style.setProperty('--text-primary', text);
-            document.documentElement.style.setProperty('--text-secondary', brightness > 130 ? '#334155' : '#94a3b8');
-            document.getElementById('palettePopup').style.display = 'none';
+        function changeProfilePicFromPanel(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    myProfileData = e.target.result;
+                    userData.profilePic = myProfileData;
+                    document.getElementById('profilePanelAvatar').src = myProfileData;
+                    saveAllData();
+                    initializeUserData();
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
         }
 
-        function toggleSidebar() { document.getElementById('roomPanel').classList.toggle('open'); }
-
-        window.addEventListener('beforeunload', function() {
+        function updateUserColor(color) {
+            userBubbleColor = color;
+            userData.bubbleColor = color;
             saveAllData();
-            if (client) client.publish('cengo/online', JSON.stringify({ type: 'offline', user: username, userId: USER_ID }));
-            if (isInVoiceCall) leaveVoiceCall();
-        });
-
-        // ============================================================
-        // ===== GİRİŞ MODALI =====
-        function closeEntryModalDirect() {
-            const modal = document.getElementById('entryModal');
-            modal.style.display = 'none';
-            modal.style.opacity = '0';
-            setTimeout(() => { modal.style.display = 'none'; }, 300);
         }
 
-        function showThxEffect() {
-            const overlay = document.getElementById('thxOverlay');
-            overlay.style.display = 'flex';
-            overlay.classList.add('show');
-            createThxParticles();
-            setTimeout(() => { overlay.classList.remove('show'); overlay.style.display = 'none'; }, 2500);
+        function closeEntryModalDirect() {
+            document.getElementById('entryModal').style.display = 'none';
         }
 
         function closeEntryModalWithThx() {
-            const modal = document.getElementById('entryModal');
-            modal.style.display = 'none';
-            modal.style.opacity = '0';
-            setTimeout(() => { modal.style.display = 'none'; }, 300);
-            setTimeout(() => { showThxEffect(); }, 200);
+            closeEntryModalDirect();
+            const overlay = document.getElementById('thxOverlay');
+            overlay.classList.add('show');
+            setTimeout(() => { overlay.classList.remove('show'); }, 2000);
         }
 
-        function createThxParticles() {
-            const colors = ['#ffcc00', '#ff8800', '#ff4400', '#ffdd44', '#ffaa00', '#ffee66', '#ff6600'];
-            const emojis = ['💖', '✨', '🌟', '💛', '⭐', '🌈', '💕', '🎉', '🔥', '❤️'];
-            for (let i = 0; i < 60; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'thx-particle';
-                const isEmoji = Math.random() > 0.5;
-                if (isEmoji) {
-                    particle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-                    particle.style.fontSize = (16 + Math.random() * 24) + 'px';
-                    particle.style.background = 'transparent';
-                    particle.style.width = 'auto';
-                    particle.style.height = 'auto';
-                } else {
-                    particle.style.background = colors[Math.floor(Math.random() * colors.length)];
-                    const size = 6 + Math.random() * 14;
-                    particle.style.width = size + 'px';
-                    particle.style.height = size + 'px';
-                }
-                const angle = Math.random() * 2 * Math.PI;
-                const distance = 200 + Math.random() * 500;
-                const tx = Math.cos(angle) * distance;
-                const ty = Math.sin(angle) * distance - 100;
-                const startX = window.innerWidth / 2;
-                const startY = window.innerHeight / 2;
-                particle.style.left = startX + 'px';
-                particle.style.top = startY + 'px';
-                particle.style.setProperty('--tx', tx + 'px');
-                particle.style.setProperty('--ty', ty + 'px');
-                particle.style.animationDelay = (Math.random() * 0.4) + 's';
-                document.body.appendChild(particle);
-                setTimeout(() => { particle.remove(); }, 1800 + Math.random() * 500);
+        function addEmoji(emoji) {
+            const input = document.getElementById('msgText');
+            input.value += emoji;
+            input.focus();
+        }
+
+        function handleTyping() {
+            if (!currentTopic) return;
+            client.publish(currentTopic + '/typing', JSON.stringify({ user: username }));
+        }
+
+        function handleMention() {
+            const input = document.getElementById('msgText');
+            const val = input.value;
+            const lastAt = val.lastIndexOf('@');
+            if (lastAt !== -1 && lastAt >= val.length - 15) {
+                mentionQuery = val.substring(lastAt + 1).toLowerCase();
+                showMentionSuggestions(mentionQuery);
+            } else {
+                hideMentionSuggestions();
             }
         }
 
-        // ============================================================
-        // ===== ASİSTAN =====
-        function toggleAssistant() {
-            const win = document.getElementById('assistantWindow');
-            win.classList.toggle('open');
-            if (win.classList.contains('open')) document.getElementById('assistantInput').focus();
+        function showMentionSuggestions(query) {
+            const suggest = document.getElementById('mentionSuggest');
+            const users = Object.keys(onlineUsers).filter(u => u.toLowerCase().includes(query) && u !== username);
+            if (users.length === 0) { hideMentionSuggestions(); return; }
+            suggest.innerHTML = users.map(u => `
+                <div class="mention-item" onclick="selectMention('${u}')">
+                    <span class="mention-name">@${u}</span>
+                </div>
+            `).join('');
+            suggest.classList.add('show');
         }
 
-        function addAssistantMessage(text, sender) {
-            const container = document.getElementById('assistantMessages');
-            const div = document.createElement('div');
-            div.className = 'aw-msg ' + (sender === 'bot' ? 'bot' : 'user');
+        function hideMentionSuggestions() {
+            document.getElementById('mentionSuggest').classList.remove('show');
+        }
+
+        function selectMention(uname) {
+            const input = document.getElementById('msgText');
+            const val = input.value;
+            const lastAt = val.lastIndexOf('@');
+            input.value = val.substring(0, lastAt) + '@' + uname + ' ';
+            hideMentionSuggestions();
+            input.focus();
+        }
+
+        function setReply(msgId, senderName) {
+            replyTarget = { msgId, senderName };
+            document.getElementById('replyTargetName').textContent = senderName;
+            document.getElementById('replyCancelBar').classList.add('show');
+            document.getElementById('msgText').focus();
+        }
+
+        function cancelReply() {
+            replyTarget = null;
+            document.getElementById('replyCancelBar').classList.remove('show');
+        }
+
+        function updateRoomActivity(roomName) {
+            userData.roomLastActivity[roomName] = Date.now();
+            saveAllData();
+            renderRoomList();
+        }
+
+        function createRoom() {
+            const nameInput = document.getElementById('newRoomInput');
+            const passInput = document.getElementById('newRoomPass');
+            const name = censorProfanity(nameInput.value.trim());
+            const pass = passInput.value.trim();
+            if (!name) return;
+
+            if (!userData.rooms[name]) {
+                userData.rooms[name] = { pass, owner: username, isVoice: name.toLowerCase().includes('sesli') };
+                userData.roomLastActivity[name] = Date.now();
+                saveAllData();
+                renderRoomList();
+                switchRoom(name);
+                nameInput.value = '';
+                passInput.value = '';
+                showToast(`✨ '${name}' odası oluşturuldu!`);
+            } else {
+                showToast('⛔ Bu isimde bir oda zaten var!');
+            }
+        }
+
+        function renderRoomList() {
+            const list = document.getElementById('roomList');
+            list.innerHTML = '';
+            for (let roomName in userData.rooms) {
+                const room = userData.rooms[roomName];
+                const item = document.createElement('div');
+                item.className = `room-item ${roomName === currentRoomName ? 'active' : ''}`;
+                
+                let badges = '';
+                if (room.pass) badges += ' <span class="lock">🔒</span>';
+                if (room.isVoice) badges += ' <span class="voice-badge">🎤</span>';
+                
+                item.innerHTML = `<span># ${roomName}${badges}</span>`;
+                item.onclick = () => switchRoom(roomName);
+                list.appendChild(item);
+            }
+        }
+
+        function switchRoom(roomName) {
+            const room = userData.rooms[roomName];
+            if (room && room.pass) {
+                const enteredPass = prompt(`'${roomName}' odası şifreli. Şifreyi giriniz:`);
+                if (enteredPass !== room.pass) {
+                    alert('Yanlış şifre!');
+                    return;
+                }
+            }
+
+            currentRoomName = roomName;
+            currentTopic = 'cengo/rooms/' + roomName;
+            isVoiceRoom = room ? !!room.isVoice : false;
+
+            document.getElementById('currentRoomTitle').textContent = `# ${roomName}`;
+            document.getElementById('voiceRoomTag').style.display = isVoiceRoom ? 'inline' : 'none';
+            document.getElementById('voiceOnlyTag').style.display = roomName === 'SesliSohbet' ? 'inline' : 'none';
+            
+            const chatInputArea = document.getElementById('chatInputArea');
+            if (roomName === 'SesliSohbet') {
+                chatInputArea.classList.add('voice-only');
+            } else {
+                chatInputArea.classList.remove('voice-only');
+            }
+
+            renderRoomList();
+            updateVoiceMicBtn();
+            loadRoomMessages(roomName);
+            
+            if (client) {
+                client.subscribe(currentTopic);
+                client.subscribe(currentTopic + '/typing');
+            }
+        }
+
+        function loadRoomMessages(roomName) {
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.innerHTML = '';
+            const history = userData.messageHistory[roomName] || [];
+            if (history.length === 0) {
+                messagesContainer.innerHTML = '<div style="text-align:center; color:#475569; margin-top:80px;">Henüz mesaj yok. İlk mesajı sen yaz!</div>';
+                return;
+            }
+            history.forEach(msg => displayMessage(msg));
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function displayMessage(data) {
+            const messagesContainer = document.getElementById('chatMessages');
+            
+            // Eğer placeholder metni varsa temizle
+            if (messagesContainer.children.length === 1 && messagesContainer.children[0].tagName === 'DIV' && !messagesContainer.children[0].classList.contains('msg')) {
+                messagesContainer.innerHTML = '';
+            }
+
+            const isMyMsg = data.userId === USER_ID;
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `msg ${isMyMsg ? 'my-msg' : ''}`;
+            msgDiv.id = `msg-${data.msgId}`;
+
+            let replyHtml = '';
+            if (data.replyTarget) {
+                replyHtml = `<div class="reply-indicator"><span>↩️ ${data.replyTarget.senderName}'e yanıt</span></div>`;
+            }
+
+            let contentHtml = '';
+            if (data.type === 'gif') {
+                contentHtml = `<img src="${data.content}" alt="GIF" onclick="window.open('${data.content}')">`;
+            } else if (data.type === 'audio') {
+                contentHtml = `<audio src="${data.content}" controls></audio>`;
+            } else if (data.type === 'file') {
+                contentHtml = `<a href="${data.content}" download="dosya">📎 Dosya Ekranı / İndir</a>`;
+            } else {
+                contentHtml = data.content;
+            }
+
+            msgDiv.innerHTML = `
+                <img src="${data.pp || 'https://www.w3schools.com/howto/img_avatar.png'}" class="msg-avatar" onclick="openProfileOf('${data.userId}', '${data.gonderen}')">
+                <div class="msg-bubble" style="${isMyMsg ? `background:${data.color || userBubbleColor}` : ''}">
+                    ${replyHtml}
+                    <div>${contentHtml}</div>
+                    <div class="msg-footer">
+                        <span class="sender-name">${data.gonderen}</span>
+                        ${data.levelBadge ? `<span class="level-tag">${data.levelBadge} Lv.${data.level}</span>` : ''}
+                        ${data.isAdmin ? `<span class="admin-tag">👑 Admin</span>` : ''}
+                        <span class="time-tooltip" title="${data.fullDate || ''}">${data.time || ''}</span>
+                    </div>
+                </div>
+                <div class="msg-actions">
+                    <button class="reply-btn" onclick="setReply('${data.msgId}', '${data.gonderen}')" title="Yanıtla">↩️</button>
+                    ${isMyMsg || isAdmin || isOwner ? `<button class="del-btn" onclick="deleteMessage('${data.msgId}')" title="Sil">🗑️</button>` : ''}
+                </div>
+            `;
+
+            messagesContainer.appendChild(msgDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function sendMessage() {
+            if (currentRoomName === 'SesliSohbet') {
+                showToast('⛔ Sesli sohbet odasında yazı mesajı gönderilemez!');
+                return;
+            }
+
+            const input = document.getElementById('msgText');
+            const text = input.value.trim();
+            if (!text) return;
+
+            if (text.startsWith('/')) {
+                handleCommand(text);
+                input.value = '';
+                return;
+            }
+
             const now = new Date();
             const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-            div.innerHTML = text + `<span class="aw-time">${timeStr}</span>`;
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
-        }
+            const fullDate = now.toLocaleString('tr-TR');
+            const msgId = Date.now() + '_' + Math.random().toString(36).substr(2, 6);
 
-        function askAssistant(input) {
-            if (!input || !input.trim()) return;
-            const inputField = document.getElementById('assistantInput');
-            const question = input.trim();
-            inputField.value = '';
-            addAssistantMessage(question, 'user');
-            const lower = question.toLowerCase();
-            let answer = '';
-            if (lower.includes('burak msz') || lower.includes('burak_msz') || (lower.includes('burak') && lower.includes('msz'))) {
-                answer = 'burak msz 19 yaşında projeler yapan, genç girişimcidir. web sitesine ve instagram adresine soldaki butonlardan ulaşabilirsin.';
-            } else if (lower.includes('bu site') || lower.includes('cengo chat') || lower.includes('bu ne') || (lower.includes('site') && lower.includes('ne'))) {
-                answer = 'bu site cengO chat. sohbet sitesi. whatsapp ve discorddaki sıkıntılar sonucu burak_msz tarafından yapıldı.';
-            } else if (lower.includes('neler yapabilirim') || lower.includes('yapabilir miyim') || lower.includes('özellikler')) {
-                answer = 'yeni odalar kurabilir, başkalarının odalarına girebilir, profilini özelleştirebilir, arka plan rengini değiştirebilir, xp kasarak seviye atlayabilirsin. xp kasmak için günlük görevleri takip et.';
-            } else if (lower.includes('seviye') && (lower.includes('işe yarar') || lower.includes('ne') || lower.includes('nedir'))) {
-                answer = 'seviyen 5 olana kadar oda kuramazsın... seviye senin cengO chat\'teki hayatın. (bi nevi yaşın)';
-            } else if (lower.includes('sen kimsin') || lower.includes('asistan') || lower.includes('miri')) {
-                answer = 'ben cengO Chat asistanı Miri. Buraya sorular sorarak cevapları alabilirsin.';
-            } else {
-                answer = 'Üzgünüm, bu soruyu henüz cevaplayamıyorum. Ama cengO Chat hakkında sorularını beklerim!';
+            const payload = {
+                type: 'text',
+                msgId,
+                userId: USER_ID,
+                gonderen: username,
+                pp: myProfileData,
+                color: userBubbleColor,
+                content: censorProfanity(text),
+                time: timeStr,
+                fullDate,
+                replyTarget,
+                isAdmin: isAdmin || isOwner,
+                isOwner,
+                level: getStats(USER_ID).level,
+                levelBadge: getLevelBadge(getStats(USER_ID).level)
+            };
+
+            if (!userData.messageHistory[currentRoomName]) {
+                userData.messageHistory[currentRoomName] = [];
             }
-            answer = censorProfanity(answer);
-            setTimeout(() => { addAssistantMessage(answer, 'bot'); }, 300);
-        }
-
-        // ============================================================
-        // ===== BAŞLAT =====
-        // ============================================================
-        async function initApp() {
-            await openDB();
-            await loadAllData();
-            initializeUserData();
-
-            if (!userData.rooms["Genel Sohbet"]) userData.rooms["Genel Sohbet"] = { pass: "", owner: "Sistem" };
-            if (!userData.rooms["SesliSohbet"]) userData.rooms["SesliSohbet"] = { pass: "", owner: "Sistem", isVoice: true };
-            if (!userData.roomLastActivity["Genel Sohbet"]) userData.roomLastActivity["Genel Sohbet"] = Date.now();
-            if (!userData.roomLastActivity["SesliSohbet"]) userData.roomLastActivity["SesliSohbet"] = Date.now();
+            userData.messageHistory[currentRoomName].push(payload);
             saveAllData();
 
-            checkAndDeleteExpiredRooms();
-            renderRooms();
+            displayMessage(payload);
+            if (client && currentTopic) {
+                client.publish(currentTopic, JSON.stringify(payload));
+            }
 
-            const s = getStats(USER_ID);
-            updateXpBar(USER_ID);
-            renderTasks(USER_ID);
-
-            initMQTT();
-
-            console.log("==========================================");
-            console.log("🚀 Cengo Chat v5.1 - KALICI SÜRÜM!");
-            console.log("🆔 Benzersiz Kullanıcı ID: " + USER_ID);
-            console.log("👤 Kullanıcı Adı: " + username);
-            console.log("📊 Seviye: " + s.level + " | XP: " + s.xp);
-            console.log("==========================================");
-            console.log("✅ Veriler IndexedDB'ye kaydediliyor! F5 atsan bile kaybolmaz!");
-            console.log("✅ Tüm mesajlar, odalar, seviyeler kalıcı!");
-            console.log("✅ @ ile etiketleme sistemi aktif!");
-            console.log("✅ Liderlik tablosu düzeltildi (userId bazlı birleştirme)");
-            console.log("✅ Profil sistemi eklendi (bio, pp, kullanıcı adı)");
-            console.log("✅ Sesli sohbette canlı mikrofon butonu eklendi");
-            console.log("==========================================");
+            input.value = '';
+            cancelReply();
+            updateRoomActivity(currentRoomName);
+            updateStats(USER_ID, 'message');
+            updateTaskProgress(USER_ID);
         }
 
-        initApp();
-        setInterval(() => { saveAllData(); }, 30000);
-        setInterval(() => { checkAndDeleteExpiredRooms(); }, 5 * 60 * 1000);
+        function deleteMessage(msgId) {
+            if (!userData.messageHistory[currentRoomName]) return;
+            userData.messageHistory[currentRoomName] = userData.messageHistory[currentRoomName].filter(m => m.msgId !== msgId);
+            saveAllData();
+            
+            const msgElem = document.getElementById(`msg-${msgId}`);
+            if (msgElem) msgElem.remove();
+        }
+
+        function handleCommand(cmd) {
+            if (cmd === '/help') {
+                toggleHelp();
+            } else if (cmd === '/stats') {
+                const s = getStats(USER_ID);
+                showToast(`📊 Toplam Mesaj: ${s.messages} | Seviye: ${s.level} | XP: ${s.xp}`);
+            } else if (cmd === '/clear') {
+                if (isAdmin || isOwner) {
+                    userData.messageHistory[currentRoomName] = [];
+                    saveAllData();
+                    loadRoomMessages(currentRoomName);
+                    showToast('🧹 Oda temizlendi!');
+                } else {
+                    showToast('⛔ Bu komut için admin yetkisi gerekiyor!');
+                }
+            } else {
+                showToast('❓ Bilinmeyen komut. /help yazarak komutları görebilirsin.');
+            }
+        }
+
+        function toggleBanPanel() {
+            document.getElementById('banPanel').classList.toggle('show');
+        }
+
+        function handleFile(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const now = new Date();
+                    const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                    const msgId = Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+
+                    const payload = {
+                        type: 'file',
+                        msgId,
+                        userId: USER_ID,
+                        gonderen: username,
+                        pp: myProfileData,
+                        color: userBubbleColor,
+                        content: e.target.result,
+                        time: timeStr,
+                        isAdmin: isAdmin || isOwner,
+                        level: getStats(USER_ID).level,
+                        levelBadge: getLevelBadge(getStats(USER_ID).level)
+                    };
+
+                    displayMessage(payload);
+                    if (!userData.messageHistory[currentRoomName]) userData.messageHistory[currentRoomName] = [];
+                    userData.messageHistory[currentRoomName].push(payload);
+                    saveAllData();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function toggleRecording() {
+            if (!isRecording) {
+                navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const now = new Date();
+                            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                            const msgId = Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+
+                            const payload = {
+                                type: 'audio',
+                                msgId,
+                                userId: USER_ID,
+                                gonderen: username,
+                                pp: myProfileData,
+                                color: userBubbleColor,
+                                content: e.target.result,
+                                time: timeStr,
+                                isAdmin: isAdmin || isOwner,
+                                level: getStats(USER_ID).level,
+                                levelBadge: getLevelBadge(getStats(USER_ID).level)
+                            };
+
+                            displayMessage(payload);
+                            if (!userData.messageHistory[currentRoomName]) userData.messageHistory[currentRoomName] = [];
+                            userData.messageHistory[currentRoomName].push(payload);
+                            saveAllData();
+                        };
+                        reader.readAsDataURL(audioBlob);
+                    };
+                    mediaRecorder.start();
+                    isRecording = true;
+                    document.getElementById('recordingIndicator').classList.add('show');
+                }).catch(() => alert('Mikrofon izni reddedildi!'));
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                document.getElementById('recordingIndicator').classList.remove('show');
+            }
+        }
 
         // ============================================================
-        // EKSİK SABİTLER
-        const MESSAGE_HISTORY_KEY = 'cengo_history_v5';
-        const ROOMS_KEY = 'cengo_rooms_v5';
-        const BANS_KEY = 'cengo_bans_v5';
-        const ADMINS_KEY = 'cengo_admins_v5';
-        const STATS_KEY = 'cengo_stats_v5';
-        const TASKS_KEY = 'cengo_tasks_v5';
-        const USERS_KEY = 'cengo_users_v5';
+        // ===== ASİSTAN MİRİ =====
+        function toggleAssistant() {
+            document.getElementById('assistantWindow').classList.toggle('open');
+        }
+
+        function askAssistant(text) {
+            if (!text || !text.trim()) return;
+            const msgs = document.getElementById('assistantMessages');
+            
+            // Kullanıcı mesajı
+            const uMsg = document.createElement('div');
+            uMsg.className = 'aw-msg user';
+            uMsg.innerHTML = `${text}<span class="aw-time">Şimdi</span>`;
+            msgs.appendChild(uMsg);
+
+            document.getElementById('assistantInput').value = '';
+
+            // Yanıt Oluşturma
+            setTimeout(() => {
+                let reply = "Tam olarak anlayamadım, cengO Chat hakkında sorular sorabilirsin!";
+                const q = text.toLowerCase();
+
+                if (q.includes('burak') || q.includes('msz')) {
+                    reply = "burak_msz, cengO Chat'in geliştiricisidir. Instagram ve web sitesi linklerine sol menüden ulaşabilirsin!";
+                } else if (q.includes('site') || q.includes('nedir')) {
+                    reply = "cengO Chat; hızlı, güvenli, sesli ve yazılı iletişim imkanı sunan modern bir sohbet platformudur.";
+                } else if (q.includes('neler yapabilirim')) {
+                    reply = "Oda oluşturabilir, sesli sohbetlere katılabilir, GIF/ses kaydı gönderebilir ve seviye atlayabilirsin!";
+                } else if (q.includes('seviye') || q.includes('xp')) {
+                    reply = "Mesaj gönderdikçe ve günlük görevleri yaptıkça XP kazanırsın. XP kazandıkça seviyen artar ve liderlik tablosunda üst sıraya tırmanırsın!";
+                } else if (q.includes('sen kimsin')) {
+                    reply = "Ben Miri! cengO Chat için özel geliştirilmiş yapay zeka asistanıyım.";
+                }
+
+                const bMsg = document.createElement('div');
+                bMsg.className = 'aw-msg bot';
+                bMsg.innerHTML = `${reply}<span class="aw-time">Şimdi</span>`;
+                msgs.appendChild(bMsg);
+                msgs.scrollTop = msgs.scrollHeight;
+            }, 500);
+        }
+
+        function openProfileOf(uId, uName) {
+            showToast(`👤 ${uName} kullanıcısının profili inceleniyor.`);
+        }
+
+        // ============================================================
+        // ===== BAŞLANGIÇ YÜKLEMESİ =====
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadAllData();
+            initializeUserData();
+            renderRoomList();
+
+            // MQTT Bağlantısı
+            try {
+                client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+                client.on('connect', () => {
+                    console.log('MQTT Bağlandı!');
+                    switchRoom('Genel Sohbet');
+                });
+                client.on('message', (topic, message) => {
+                    try {
+                        const data = JSON.parse(message.toString());
+                        if (topic.endsWith('/typing')) {
+                            if (data.user !== username) {
+                                document.getElementById('typingUser').textContent = data.user;
+                                const ind = document.getElementById('typingIndicator');
+                                ind.classList.add('show');
+                                clearTimeout(typingTimeout);
+                                typingTimeout = setTimeout(() => ind.classList.remove('show'), 2000);
+                            }
+                        } else if (data.userId !== USER_ID) {
+                            displayMessage(data);
+                            if (!userData.messageHistory[currentRoomName]) userData.messageHistory[currentRoomName] = [];
+                            userData.messageHistory[currentRoomName].push(data);
+                            saveAllData();
+                        }
+                    } catch (e) { console.error('MQTT Mesaj hatası:', e); }
+                });
+            } catch (e) {
+                console.error('MQTT Bağlantı hatası:', e);
+            }
+        });
     </script>
 </body>
 </html>
