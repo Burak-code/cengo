@@ -260,6 +260,14 @@
         .entry-modal-card .social-links a { color: var(--text-secondary); font-size: 13px; text-decoration: none; background: var(--bg-card); padding: 4px 14px; border-radius: 20px; transition: var(--transition); border: 1px solid var(--border-color); }
         .entry-modal-card .social-links a:hover { background: var(--accent); color: white; border-color: var(--accent); }
         
+        .haxball-event-card { border:1px solid rgba(16,185,129,.45); background:linear-gradient(135deg,rgba(16,185,129,.13),rgba(59,130,246,.10)); border-radius:18px; padding:18px; margin:14px 0; }
+        .haxball-event-top { display:flex; align-items:center; gap:8px; color:#10b981; font-size:11px; font-weight:800; letter-spacing:1.2px; margin-bottom:9px; }
+        .haxball-live-dot { width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 0 4px rgba(16,185,129,.14); }
+        .haxball-event-title { color:var(--text-primary); font-size:18px; font-weight:800; line-height:1.35; margin-bottom:8px; }
+        .haxball-event-desc { color:var(--text-secondary); font-size:13px; line-height:1.65; }
+        .haxball-event-meta { display:flex; flex-direction:column; gap:5px; margin-top:12px; color:var(--text-primary); font-size:12px; }
+        .haxball-event-link { display:inline-flex; margin-top:13px; padding:8px 13px; border-radius:999px; background:#10b981; color:#052e24; font-size:12px; font-weight:800; text-decoration:none; }
+
         /* 🆕 MSZ Medya Tanıtım Kartı */
         .msz-promo-card {
             background: linear-gradient(135deg, rgba(236,72,153,0.15), rgba(139,92,246,0.15));
@@ -672,9 +680,19 @@
     <div class="entry-modal" id="entryModal">
         <div class="entry-modal-card">
             <button class="close-btn" onclick="closeEntryModalDirect()">✕</button>
-            <div class="modal-title">🚀 cengO Chat v5.5</div>
+            <div class="modal-title">🚀 cengO Chat v5.6</div>
             <div class="modal-sub"><strong>@burak_msz</strong> tarafından yapılmıştır.<br>Sol taraftan web sitesine ve Instagram'a ulaşabilirsiniz.</div>
             
+            <div class="modal-divider"></div>
+
+            <div class="haxball-event-card" role="region" aria-label="HaxBall etkinliği">
+                <div class="haxball-event-top"><span class="haxball-live-dot"></span><span>MSZ TOPLULUK ETKİNLİĞİ</span></div>
+                <div class="haxball-event-title">⚽ Her akşam 20.00 — HaxBall buluşması</div>
+                <div class="haxball-event-desc">Herkes davetli! Aynı saatte toplanalım, oda kuralım ve birlikte maç yapalım. Katılmak isteyenler saat 20.00'de cengO'ya girip <strong>#msz</strong> odasına uğrasın.</div>
+                <div class="haxball-event-meta"><span>🕗 Her gün 20.00 (Türkiye saati)</span><span>🏆 Topluluk maçları / mini turnuva</span></div>
+                <a class="haxball-event-link" href="https://www.haxball.com/" target="_blank" rel="noopener noreferrer">HaxBall'ı aç ↗</a>
+            </div>
+
             <div class="modal-divider"></div>
             
             <div class="msz-promo-card">
@@ -704,7 +722,7 @@
             <div class="modal-footer">
                 <button class="btn enter-btn" onclick="enterChat()">🚀 Sohbete Başla</button>
             </div>
-            <div class="small-note">cengO v5.5 • güvenli sohbet</div>
+            <div class="small-note">cengO v5.6 • Firebase bağlantılı sohbet</div>
         </div>
     </div>
 
@@ -1014,6 +1032,121 @@
     <div class="notification-sound-badge" id="notifBadge">🔔 Yeni yanıt!</div>
     <div class="toast" id="toast"></div>
 
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+      import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+      import { getDatabase, ref, onValue, get, set, update, remove, push, query, orderByChild, startAt } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyDk_LmSajhYP4GnEgNPw1ox8xOZHEDGcSQ",
+        authDomain: "cengo-6f171.firebaseapp.com",
+        databaseURL: "https://cengo-6f171-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "cengo-6f171",
+        storageBucket: "cengo-6f171.firebasestorage.app",
+        messagingSenderId: "907660840239",
+        appId: "1:907660840239:web:16255add283116b70825da",
+        measurementId: "G-F1M1XYW01V"
+      };
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const database = getDatabase(app);
+      const ready = signInAnonymously(auth).then(async cred => {
+        const systemRooms = [
+          ['R2VuZWwgU29oYmV0', {name:'Genel Sohbet', password:'', isVoice:false, ownerUid:'SYSTEM', ownerName:'Sistem', createdAt:Date.now()}],
+          ['U2VzbGlTb2hiZXQ', {name:'SesliSohbet', password:'', isVoice:true, ownerUid:'SYSTEM', ownerName:'Sistem', createdAt:Date.now()}]
+        ];
+        for (const [key, meta] of systemRooms) {
+          const snapshot = await get(metaRef(key));
+          if (!snapshot.exists()) await set(metaRef(key), meta);
+          const activity = await get(activityRef(key));
+          if (!activity.exists()) await set(activityRef(key), {lastActiveAt:Date.now()});
+        }
+        return cred.user;
+      }).catch(err => {
+        console.error('Firebase kimlik doğrulama hatası:', err);
+        throw err;
+      });
+      const encodeRoom = name => btoa(unescape(encodeURIComponent(name))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+      const roomRef = key => ref(database, `rooms/${key}`);
+      const metaRef = key => ref(database, `rooms/${key}/meta`);
+      const messagesRef = key => ref(database, `roomMessages/${key}`);
+      const activityRef = key => ref(database, `roomActivity/${key}`);
+      let roomsCallback = null;
+      let cachedRooms = {};
+      let cachedActivity = {};
+      const messageUnsubs = new Map();
+      window.cengoFirebase = {
+        ready,
+        get uid(){ return auth.currentUser?.uid || null; },
+        encodeRoom,
+        async listRooms(){
+          await ready;
+          const snap = await get(ref(database, 'rooms'));
+          return snap.exists() ? snap.val() : {};
+        },
+        watchRooms(callback){
+          roomsCallback = callback;
+          const publish = () => callback({ rooms: cachedRooms, roomActivity: cachedActivity });
+          onValue(ref(database, 'rooms'), snap => { cachedRooms = snap.exists() ? snap.val() : {}; publish(); }, err => console.error('Oda listesi okunamadı:', err));
+          onValue(ref(database, 'roomActivity'), snap => { cachedActivity = snap.exists() ? snap.val() : {}; publish(); }, err => console.error('Oda etkinliği okunamadı:', err));
+        },
+        async createRoom(name, password, isVoice=false){
+          const user = await ready; const key = encodeRoom(name);
+          const existing = await get(metaRef(key));
+          if (existing.exists()) throw new Error('Bu isimde bir oda zaten var.');
+          await set(metaRef(key), { name, password: password || '', isVoice: !!isVoice, ownerUid: user.uid, ownerName: window.cengoCurrentUsername || 'Kullanıcı', createdAt: Date.now() });
+          await set(activityRef(key), { lastActiveAt: Date.now() });
+          return key;
+        },
+        async deleteRoom(name){
+          const user = await ready; const key = encodeRoom(name);
+          const snap = await get(metaRef(key));
+          if (!snap.exists()) return;
+          if (snap.val().ownerUid !== user.uid) throw new Error('Yalnızca odayı oluşturan hesap silebilir.');
+          await remove(metaRef(key)); await remove(activityRef(key)); await remove(messagesRef(key));
+        },
+        async touchRoom(name){
+          await ready; const key = encodeRoom(name);
+          const snap = await get(metaRef(key));
+          if (snap.exists()) await set(activityRef(key), { lastActiveAt: Date.now() });
+        },
+        watchMessages(name, callback){
+          const key = encodeRoom(name);
+          if (messageUnsubs.has(key)) { messageUnsubs.get(key)(); messageUnsubs.delete(key); }
+          const unsub = onValue(messagesRef(key), snap => {
+            const data = snap.exists() ? snap.val() : {};
+            callback(Object.entries(data).map(([id, value]) => ({...value, msgId: value.msgId || id})).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).slice(-500));
+          }, err => console.error('Mesajlar okunamadı:', err));
+          messageUnsubs.set(key, unsub); return unsub;
+        },
+        async sendMessage(name, payload){
+          const user = await ready; const key = encodeRoom(name);
+          const room = await get(metaRef(key));
+          if (!room.exists()) throw new Error('Bu oda artık mevcut değil.');
+          const safePayload = {...payload, userId: user.uid, createdAt: Date.now()};
+          const newMsg = push(messagesRef(key)); await set(newMsg, safePayload);
+          await set(activityRef(key), { lastActiveAt: Date.now() });
+        },
+        async cleanupExpiredRooms(){
+          await ready;
+          const rooms = await get(ref(database, 'rooms'));
+          const now = Date.now(); const week = 7*24*60*60*1000;
+          if (!rooms.exists()) return;
+          const entries = Object.entries(rooms.val());
+          for (const [key, value] of entries) {
+            const meta = value?.meta;
+            if (!meta || !meta.name || ['Genel Sohbet','SesliSohbet'].includes(meta.name)) continue;
+            const activity = await get(activityRef(key));
+            const last = activity.exists() ? Number(activity.val().lastActiveAt || meta.createdAt || 0) : Number(meta.createdAt || 0);
+            if (now - last >= week) {
+              // Oda sahibi kimliğine dokunulmaz; oda yalnızca süresi dolunca kaldırılır.
+              await remove(metaRef(key)); await remove(activityRef(key)); await remove(messagesRef(key));
+            }
+          }
+        }
+      };
+      window.dispatchEvent(new CustomEvent('cengo-firebase-ready'));
+    </script>
     <script>
     // ============================================================
     // ===== REKLAM KONFİGÜRASYONU =====
@@ -1497,8 +1630,8 @@
         username = userData.username || "Kullanıcı";
         myProfileData = userData.profilePic || "https://www.w3schools.com/howto/img_avatar.png";
         userBubbleColor = userData.bubbleColor || "#3b82f6";
-        isOwner = (username === OWNER_NAME);
-        isAdmin = isOwner || !!userData.admins[USER_ID];
+        isOwner = false;
+        isAdmin = false;
         document.getElementById("myProfilePic").src = myProfileData;
         document.getElementById("sidebarUsername").innerText = username;
         document.getElementById("userInfo").innerHTML = "👤 " + escapeHtml(username) + ' <span style="font-size:10px;cursor:pointer;" onclick="toggleSound()">' + (soundEnabled ? "🔊" : "🔇") + '</span>';
@@ -1509,6 +1642,7 @@
         if (userData.theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
         else document.documentElement.removeAttribute('data-theme');
         if (userData.customTheme) applyCustomTheme(userData.customTheme);
+        window.cengoCurrentUsername = username;
         const s = getStats(USER_ID);
         s.username = username;
         s.profilePic = myProfileData;
@@ -1522,7 +1656,7 @@
         const tag = document.getElementById('roomOwnerTag');
         if (!tag) return;
         const room = userData.rooms[currentRoomName];
-        const amIRoomOwner = room && room.owner === username && room.owner !== 'Sistem';
+        const amIRoomOwner = room && room.ownerUid === USER_ID && room.owner !== 'Sistem';
         tag.style.display = amIRoomOwner ? 'inline' : 'none';
 
         const slow = getRoomSlow(currentRoomName);
@@ -1941,20 +2075,40 @@
     // ===== ODA YÖNETİMİ =====
     // ============================================================
     function updateRoomActivity(roomName) { userData.roomLastActivity[roomName] = Date.now(); saveAllData(); }
-    function createRoom() {
+    async function createRoom() {
         const nameInput = document.getElementById('newRoomInput');
         const passInput = document.getElementById('newRoomPass');
         const name = censorProfanity(nameInput.value.trim()).substring(0, 30);
         const pass = passInput.value.trim();
         if (!name) { showToast('⛔ Oda adı boş olamaz!'); return; }
-        if (!userData.rooms[name]) {
-            userData.rooms[name] = { pass, owner: username, isVoice: false };
-            userData.roomLastActivity[name] = Date.now();
-            userData.roomSlow[name] = 0;
-            saveAllData(); renderRoomList(); switchRoom(name);
+        if (['Genel Sohbet','SesliSohbet'].includes(name)) { showToast('⛔ Bu isim sistem odasına ait.'); return; }
+        try {
+            if (!window.cengoFirebase) throw new Error('Firebase hazır değil.');
+            await window.cengoFirebase.createRoom(name, pass, false);
+            const allRooms = await window.cengoFirebase.listRooms();
+            syncFirebaseRooms(allRooms);
             nameInput.value = ''; passInput.value = '';
-            showToast(`✨ '${name}' odası oluşturuldu! Oda sahibi sensin 👑`);
-        } else showToast('⛔ Bu isimde bir oda zaten var!');
+            renderRoomList(); switchRoom(name);
+            showToast(`✨ '${name}' odası oluşturuldu! Oda sahibi hesabına bağlıdır 👑`);
+        } catch (e) { console.error(e); showToast('⛔ Oda oluşturulamadı: ' + (e.message || 'Firebase hatası')); }
+    }
+
+    function syncFirebaseRooms(firebaseRooms) {
+        const sourceRooms = firebaseRooms?.rooms || firebaseRooms || {};
+        const sourceActivity = firebaseRooms?.roomActivity || {};
+        const rooms = { ...DEFAULT_ROOMS };
+        const lastActivity = { ...userData.roomLastActivity };
+        for (const [key, value] of Object.entries(sourceRooms)) {
+            const meta = value && value.meta;
+            if (!meta || !meta.name) continue;
+            rooms[meta.name] = { pass: meta.password || '', owner: meta.ownerName || 'Kullanıcı', ownerUid: meta.ownerUid || '', isVoice: !!meta.isVoice, firebaseKey: key };
+            lastActivity[meta.name] = Number(sourceActivity[key]?.lastActiveAt || meta.createdAt || Date.now());
+        }
+        userData.rooms = rooms;
+        userData.roomLastActivity = lastActivity;
+        for (const roomName of Object.keys(rooms)) if (userData.roomSlow[roomName] === undefined) userData.roomSlow[roomName] = ['Genel Sohbet','SesliSohbet'].includes(roomName) ? 5 : 0;
+        saveAllData();
+        if (typeof renderRoomList === 'function') renderRoomList();
     }
 
     function renderRoomList() {
@@ -1974,7 +2128,7 @@
             const slow = userData.roomSlow[roomName] || 0;
             if (slow > 0) badges += ` <span class="slow-badge">🐢 ${slow}s</span>`;
 
-            const canDelete = (isOwner || room.owner === username) && room.owner !== 'Sistem';
+            const canDelete = room.ownerUid && room.ownerUid === USER_ID && room.owner !== 'Sistem';
             const deleteBtn = canDelete
                 ? `<button class="room-delete-btn" onclick="event.stopPropagation(); deleteRoom('${escapeHtml(roomName)}')" title="Odayı sil">🗑️</button>`
                 : '';
@@ -1985,22 +2139,19 @@
         }
     }
 
-    function deleteRoom(roomName) {
-        if (!userData.rooms[roomName]) return;
+    async function deleteRoom(roomName) {
         const room = userData.rooms[roomName];
+        if (!room) return;
         if (room.owner === 'Sistem') { showToast('⛔ Sistem odaları silinemez!'); return; }
-        if (!isOwner && room.owner !== username) { showToast('⛔ Bu odayı silme yetkin yok! Sadece oda sahibi silebilir.'); return; }
+        if (!room.ownerUid || room.ownerUid !== USER_ID) { showToast('⛔ Bu odayı yalnızca oluşturan Firebase hesabı silebilir.'); return; }
         if (!confirm(`"${roomName}" odasını silmek istediğine emin misin? Tüm mesajlar silinecek.`)) return;
-
-        delete userData.rooms[roomName];
-        delete userData.roomLastActivity[roomName];
-        delete userData.roomSlow[roomName];
-        delete userData.messageHistory[roomName];
-        saveAllData();
-        showToast(`🗑️ "${roomName}" odası silindi`);
-
-        if (currentRoomName === roomName) switchRoom('Genel Sohbet');
-        else renderRoomList();
+        try {
+            await window.cengoFirebase.deleteRoom(roomName);
+            delete userData.rooms[roomName]; delete userData.roomLastActivity[roomName];
+            delete userData.roomSlow[roomName]; delete userData.messageHistory[roomName]; saveAllData();
+            showToast(`🗑️ "${roomName}" odası silindi`);
+            if (currentRoomName === roomName) switchRoom('Genel Sohbet'); else renderRoomList();
+        } catch (e) { console.error(e); showToast('⛔ Oda silinemedi: ' + (e.message || 'Yetki hatası')); }
     }
 
     function switchRoom(roomName) {
@@ -2023,6 +2174,7 @@
 
         currentRoomName = roomName;
         currentTopic = 'cengo/rooms/' + roomName;
+        if (window.cengoFirebase) window.cengoFirebase.touchRoom(roomName).catch(err => console.warn('Oda aktivitesi güncellenemedi:', err));
         isVoiceRoom = !!room.isVoice;
         document.getElementById('currentRoomTitle').textContent = `# ${roomName}`;
         document.getElementById('voiceRoomTag').style.display = isVoiceRoom ? 'inline' : 'none';
@@ -2050,14 +2202,21 @@
     }
     function loadRoomMessages(roomName) {
         const messagesContainer = document.getElementById('chatMessages');
-        messagesContainer.innerHTML = '';
-        const history = userData.messageHistory[roomName] || [];
-        if (history.length === 0) {
-            messagesContainer.innerHTML = '<div style="text-align:center; color:#475569; margin-top:80px;">Henüz mesaj yok. İlk mesajı sen yaz!</div>';
-            return;
+        messagesContainer.innerHTML = '<div style="text-align:center;color:#64748b;margin-top:80px;">Mesajlar yükleniyor…</div>';
+        if (window.cengoFirebase) {
+            window.cengoFirebase.watchMessages(roomName, history => {
+                if (currentRoomName !== roomName) return;
+                messagesContainer.innerHTML = '';
+                userData.messageHistory[roomName] = history;
+                if (!history.length) messagesContainer.innerHTML = '<div style="text-align:center; color:#475569; margin-top:80px;">Henüz mesaj yok. İlk mesajı sen yaz!</div>';
+                else history.forEach(msg => displayMessage(msg));
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                saveAllData();
+            });
+        } else {
+            messagesContainer.innerHTML = '';
+            (userData.messageHistory[roomName] || []).forEach(msg => displayMessage(msg));
         }
-        history.forEach(msg => displayMessage(msg));
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
     // ============================================================
@@ -2207,10 +2366,11 @@
             stats: buildStatsPayload()
         };
         if (!userData.messageHistory[currentRoomName]) userData.messageHistory[currentRoomName] = [];
-        userData.messageHistory[currentRoomName].push(payload);
-        saveAllData();
-        displayMessage(payload);
-        if (client && currentTopic) client.publish(currentTopic, JSON.stringify(payload));
+        if (!window.cengoFirebase || !window.cengoFirebase.uid) {
+            showToast('Firebase bağlantısı hazır değil; mesaj gönderilemedi.');
+            return;
+        }
+        window.cengoFirebase.sendMessage(currentRoomName, payload).catch(err => { console.error(err); showToast('Mesaj gönderilemedi. Firebase kurallarını kontrol et.'); });
         input.value = ''; cancelReply();
         updateRoomActivity(currentRoomName);
         updateStats(USER_ID, 'message');
@@ -3241,8 +3401,20 @@ GÖREVİN: Kullanıcılara yardımcı ol. Nazik, samimi ve esprili ol. Türkçe 
     // ===== MQTT BAŞLATMA =====
     // ============================================================
     window.addEventListener('DOMContentLoaded', async () => {
+        try {
+            if (!window.cengoFirebase) throw new Error('Firebase modülü yüklenemedi.');
+            const firebaseUser = await window.cengoFirebase.ready;
+            USER_ID = firebaseUser.uid;
+            await window.cengoFirebase.cleanupExpiredRooms();
+        } catch (firebaseError) {
+            console.error(firebaseError);
+            showToast('Firebase bağlantısı kurulamadı. Firebase Auth ve veritabanı kurallarını kontrol et.');
+        }
         await loadAllData();
         initializeUserData();
+        if (window.cengoFirebase) {
+            window.cengoFirebase.watchRooms(syncFirebaseRooms);
+        }
         renderRoomList();
         renderAdPanel();
         startCooldownTicker();
@@ -3268,6 +3440,8 @@ GÖREVİN: Kullanıcılara yardımcı ol. Nazik, samimi ve esprili ol. Türkçe 
             client.on('message', (topic, message) => {
                 try {
                     const data = JSON.parse(message.toString());
+
+                    if (topic.startsWith('cengo/rooms/') && !topic.endsWith('/typing')) { return; }
 
                     if (topic === PRESENCE_TOPIC) {
                         handlePresenceMessage(data);
